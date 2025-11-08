@@ -1,0 +1,239 @@
+/* Landing page green logistics theme */
+body {
+  /* Fallback background if video can't load */
+  background: linear-gradient(135deg, #0f3d2e 0%, #0b2f31 100%);
+  color: #e9f7ef;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fullscreen background video */
+.video-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #000000; /* fallback color */
+}
+
+.video-bg iframe,
+.video-bg video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Keep aspect ratio 16:9 and cover */
+  width: 100vw;
+  height: 56.25vw; /* 9/16 of width */
+  min-height: 100vh;
+  min-width: 177.77vh; /* 16/9 of height */
+}
+
+/* Dark overlay to improve text readability */
+.overlay-dark {
+  position: fixed;
+  inset: 0;
+  /* Dark green overlay to enhance readability over video */
+  background: rgba(0, 0, 0, 0.664); /* #0f3d2e with 65% opacity */
+  z-index: -1;
+}
+
+.hero {
+  flex: 0 0 auto;
+  padding: 64px 24px 32px;
+  text-align: center;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.logo-dummy {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: transparent; /* container transparan */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* pastikan logo tetap bundar */
+  border: 2px solid rgba(23, 166, 115, 0.6); /* aksen hijau */
+  box-shadow: 0 8px 22px rgba(23, 166, 115, 0.25);
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+.logo-dummy img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* jaga proporsi logo */
+}
+
+.logo-dummy:hover,
+.logo-dummy:focus-visible {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 
+    0 10px 26px rgba(0, 0, 0, 0.24),
+    0 0 0 3px rgba(23, 166, 115, 0.28),
+    0 8px 24px rgba(23, 166, 115, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-dummy { transition: none; }
+}
+
+.site-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+.hero h1 { font-size: 34px; font-weight: 800; margin-top: 8px; }
+.hero p { max-width: 720px; margin: 8px auto 18px; color: #cde9da; }
+
+.cta {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-start {
+  background: #17a673;
+  color: #0f3d2e;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-weight: 700;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, color 180ms ease;
+  will-change: transform, box-shadow;
+}
+
+.btn-login {
+  background: #ffffff;
+  color: #0f3d2e;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-weight: 700;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, color 180ms ease;
+  will-change: transform, box-shadow;
+}
+
+/* Interaksi hover/focus untuk tombol CTA */
+.btn-start:hover,
+.btn-start:focus-visible {
+  transform: translateY(-2px) scale(1.02);
+  background: #1abf80; /* sedikit lebih cerah dari #17a673 */
+  box-shadow: 0 10px 26px rgba(23, 166, 115, 0.45);
+}
+
+.btn-login:hover,
+.btn-login:focus-visible {
+  transform: translateY(-2px) scale(1.015);
+  background: #ffffff; /* pertahankan putih agar kontras teks maksimal */
+  color: #0f3d2e !important; /* pastikan teks tetap terlihat dan tidak ikut memudar */
+  /* Glow lembut dengan aksen hijau + kedalaman netral */
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.14), /* depth netral */
+    0 0 0 3px rgba(23, 166, 115, 0.18), /* ring hijau tipis */
+    0 8px 24px rgba(23, 166, 115, 0.08); /* glow hijau sangat halus */
+}
+
+.btn-start:active,
+.btn-login:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-start,
+  .btn-login { transition: none; }
+}
+
+.features {
+  flex: 1 1 auto;
+  padding: 24px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  padding: 18px;
+  color: #ffffff;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
+  will-change: transform, box-shadow;
+}
+
+.card h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.card p { color: #e3f4ea; }
+
+.card .icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #17a673;
+  color: #0f3d2e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 8px 24px rgba(23, 166, 115, 0.45);
+}
+
+/* Hover/Focus interaksi untuk kartu fitur */
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.card:active {
+  transform: translateY(-2px) scale(1.01);
+}
+
+/* Kurangi animasi jika user memilih reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}
+
+.footer {
+  text-align: center;
+  padding: 18px;
+  color: #cde9da;
+}
+/* Caret berkedip untuk efek mengetik pada judul hero */
+.typing-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: #28a745; /* hijau tema */
+  vertical-align: text-bottom;
+  margin-left: 3px;
+  animation: caretBlink 1s steps(1, end) infinite;
+}
+
+@keyframes caretBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-caret { animation: none; }
+}

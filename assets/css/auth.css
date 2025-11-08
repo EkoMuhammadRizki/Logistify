@@ -1,0 +1,111 @@
+/* Auth pages dark theme aligned with Logistify landing */
+body {
+  background: linear-gradient(135deg, #0f3d2e 0%, #0b2f31 100%);
+  color: #e5eef2;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-box {
+  width: 360px;
+  max-width: 92vw;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(4px);
+  border-radius: 20px;
+  padding: 24px 24px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.auth-title {
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+  color: #ffffff;
+}
+
+.input-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.input-wrap input[type="text"],
+.input-wrap input[type="email"],
+.input-wrap input[type="password"] {
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+  padding-left: 48px;
+  padding-right: 52px;
+  outline: none;
+}
+
+/* Sembunyikan ikon show/hide native di dalam input password (Edge/IE) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear { display: none; }
+
+/* Cegah dekorasi bawaan WebKit yang dapat memunculkan ikon tambahan */
+input[type="password"]::-webkit-textfield-decoration-container { display: none; }
+
+.input-wrap input::placeholder { color: #cbd5e1; opacity: 1; }
+
+.input-wrap .input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #cbd5e1;
+  font-size: 18px;
+}
+
+.input-wrap .toggle-eye {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-auth {
+  width: 100%;
+  height: 50px;
+  border-radius: 999px;
+  border: none;
+  background: #17a673;
+  color: #0f3d2e;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.btn-auth:hover { filter: brightness(1.05); }
+
+.auth-subtext { text-align: center; margin-top: 12px; }
+.auth-subtext a { color: #ffffff; text-decoration: underline; }
+
+.alert-inline {
+  background: rgba(220, 53, 69, 0.2);
+  border: 1px solid rgba(220, 53, 69, 0.5);
+  color: #ffe5e8;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
