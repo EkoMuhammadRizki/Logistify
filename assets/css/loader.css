@@ -1,0 +1,74 @@
+.loader-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: transparent; /* Transparan agar halaman tetap terlihat */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  flex-direction: column;
+  transition: opacity 0.5s ease;
+}
+
+.loader-logo {
+  width: 100px;
+  height: 100px;
+  animation: pulse 1.5s infinite;
+}
+
+.loader-text {
+  font-size: 24px;
+  margin-top: 20px;
+  color: #28a745;
+  font-weight: bold;
+}
+
+/* Progress Bar */
+.progress-container {
+  width: min(480px, 80%);
+  margin-top: 24px;
+}
+
+.progress-percent {
+  text-align: center;
+  font-weight: 600;
+  color: #28a745;
+  margin-bottom: 8px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 14px;
+  background: #e9ecef;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #1e7e34, #28a745);
+  border-radius: 999px;
+  transition: width 0.12s ease;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}

@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if ($stmt->execute()) {
                 // Pendaftaran berhasil
-                header('Location: login.php?status=register_sukses');
+                header('Location: login.php?status=loading');
                 exit;
             } else {
                 $error_message = "Pendaftaran gagal. Silakan coba lagi.";
@@ -60,6 +60,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="assets/css/landing.css" rel="stylesheet">
     <link href="assets/css/dashboard.css" rel="stylesheet">
     <link href="assets/css/auth.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/media/fav-icon.png">
+    <link rel="shortcut icon" href="assets/media/fav-icon.png">
+    <link rel="apple-touch-icon" href="assets/media/fav-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#28a745">
 </head>
 <body>
     <div class="brand-bar">

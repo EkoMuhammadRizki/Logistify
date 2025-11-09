@@ -21,8 +21,24 @@ $result = $koneksi->query($query);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="assets/css/landing.css" rel="stylesheet">
     <link href="assets/css/dashboard.css" rel="stylesheet">
+    <link href="assets/css/loader.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/media/fav-icon.png">
+    <link rel="shortcut icon" href="assets/media/fav-icon.png">
+    <link rel="apple-touch-icon" href="assets/media/fav-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#28a745">
 </head>
 <body>
+    <div class="loader-wrapper">
+        <img src="assets/media/fav-icon.png" alt="Loading..." class="loader-logo">
+        <div class="loader-text">Logistify</div>
+        <div class="progress-container">
+          <div class="progress-percent">0%</div>
+          <div class="progress-track">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
+    </div>
     <div class="brand-bar">
       <div class="logo-dummy"><img src="assets/media/logistify.png" alt="Logo Logistify"></div>
       <div class="site-title">Logistify</div>
@@ -77,6 +93,45 @@ $result = $koneksi->query($query);
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="assets/js/custom.js"></script>
+    <script>
+      // Loader setelah login menuju dashboard (0–100% dengan logo)
+      (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const loader = document.querySelector('.loader-wrapper');
+        const percentEl = document.querySelector('.progress-percent');
+        const barEl = document.querySelector('.progress-bar');
+        function runProgress(onDone) {
+          let p = 0;
+          percentEl.textContent = '0%';
+          barEl.style.width = '0%';
+          const step = setInterval(() => {
+            p = Math.min(100, p + Math.floor(Math.random() * 10) + 3); // 3–12%
+            percentEl.textContent = p + '%';
+            barEl.style.width = p + '%';
+            if (p >= 100) { clearInterval(step); if (typeof onDone === 'function') onDone(); }
+          }, 120);
+        }
+        if (urlParams.get('status') === 'loading') {
+          loader.classList.remove('hidden');
+          runProgress(() => {
+            loader.classList.add('hidden');
+            setTimeout(() => {
+              Swal.fire({
+                title: 'Selamat!',
+                text: 'Kamu berhasil login.',
+                icon: 'success',
+                confirmButtonText: 'OK',
+                customClass: { confirmButton: 'btn btn-success' },
+                buttonsStyling: false
+              });
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }, 400);
+          });
+        } else {
+          loader.classList.add('hidden');
+        }
+      })();
+    </script>
     <?php if (isset($_GET['status'])): ?>
     <script>
       document.addEventListener('DOMContentLoaded', function() {

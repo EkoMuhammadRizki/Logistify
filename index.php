@@ -11,6 +11,11 @@ require_once 'functions/auth.php';
     <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4@5/bootstrap-4.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="assets/css/landing.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/media/fav-icon.png">
+    <link rel="shortcut icon" href="assets/media/fav-icon.png">
+    <link rel="apple-touch-icon" href="assets/media/fav-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#28a745">
 </head>
 <body>
   <div class="landing">
