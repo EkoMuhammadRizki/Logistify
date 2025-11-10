@@ -30,6 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $remember = isset($_POST['remember_me']); // Cookie
 
     // **GET/POST:** Mengambil data login menggunakan POST
+    // Proses autentikasi:
+    // - Ambil hash password dari DB menggunakan prepared statement.
+    // - Verifikasi menggunakan password_verify.
+    // - Jika sukses: set SESSION dan (opsional) COOKIE "remember_me".
 
     $stmt = $koneksi->prepare("SELECT id, password FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
@@ -59,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt_clear->execute();
         }
         
-        header('Location: dashboard.php?status=loading');
+        header('Location: dashboard.php?status=login_sukses');
         exit;
     } else {
         $error_message = "Username atau password salah!";
@@ -77,7 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="assets/css/landing.css" rel="stylesheet">
     <link href="assets/css/dashboard.css" rel="stylesheet">
     <link href="assets/css/auth.css" rel="stylesheet">
-    <link href="assets/css/loader.css" rel="stylesheet">
+    <link href="assets/css/splash.css" rel="stylesheet">
+    
     <link rel="icon" type="image/png" href="assets/media/fav-icon.png">
     <link rel="shortcut icon" href="assets/media/fav-icon.png">
     <link rel="apple-touch-icon" href="assets/media/fav-icon.png">
@@ -85,7 +90,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="theme-color" content="#28a745">
 </head>
 <body>
-    <div class="loader-wrapper">
+    <div id="splash" class="splash-overlay">
+      <div class="splash-content">
+        <img class="splash-logo" src="assets/media/logistify.png" alt="Logo Logistify">
+        <div class="splash-title">Logistify</div>
+      </div>
+    </div>
+    <div class="loader-wrapper" style="display:none">
         <img src="assets/media/fav-icon.png" alt="Loading..." class="loader-logo">
         <div class="loader-text">Logistify</div>
         <div class="progress-container">
@@ -125,6 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </form>
       </div>
     </div>
+    <script src="assets/js/splash.js"></script>
 </body>
 <?php if (isset($_GET['status']) && $_GET['status'] === 'register_sukses'): ?>
 <script>

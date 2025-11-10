@@ -8,6 +8,7 @@ if (!is_logged_in($koneksi)) {
   exit;
 }
 
+// CRUD: READ - ambil daftar barang untuk ditampilkan di tabel
 $query = "SELECT * FROM barang ORDER BY id DESC";
 $result = $koneksi->query($query);
 ?>
@@ -21,7 +22,7 @@ $result = $koneksi->query($query);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="assets/css/landing.css" rel="stylesheet">
     <link href="assets/css/dashboard.css" rel="stylesheet">
-    <link href="assets/css/loader.css" rel="stylesheet">
+    <link href="assets/css/splash.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="assets/media/fav-icon.png">
     <link rel="shortcut icon" href="assets/media/fav-icon.png">
     <link rel="apple-touch-icon" href="assets/media/fav-icon.png">
@@ -29,7 +30,13 @@ $result = $koneksi->query($query);
     <meta name="theme-color" content="#28a745">
 </head>
 <body>
-    <div class="loader-wrapper">
+    <div id="splash" class="splash-overlay">
+      <div class="splash-content">
+        <img class="splash-logo" src="assets/media/logistify.png" alt="Logo Logistify">
+        <div class="splash-title">Logistify</div>
+      </div>
+    </div>
+    <div class="loader-wrapper" style="display:none">
         <img src="assets/media/fav-icon.png" alt="Loading..." class="loader-logo">
         <div class="loader-text">Logistify</div>
         <div class="progress-container">
@@ -82,6 +89,7 @@ $result = $koneksi->query($query);
                     </td>
                     <td>
                         <a href="data_form.php?id=<?= $row['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                        <!-- Tombol hapus menggunakan AJAX (lihat assets/js/custom.js) -->
                         <button class="btn btn-danger btn-sm delete-btn" data-id="<?= $row['id']; ?>">Hapus (AJAX)</button>
                     </td>
                 </tr>
@@ -196,5 +204,6 @@ $result = $koneksi->query($query);
         }
       });
     </script>
+    <script src="assets/js/splash.js"></script>
   </body>
 </html>

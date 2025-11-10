@@ -1,4 +1,5 @@
-// Membutuhkan jQuery (sudah di-include di index.php)
+// AJAX Delete Data Barang
+// Membutuhkan jQuery (di-include di dashboard.php) & SweetAlert2 (tema Bootstrap)
 $(document).ready(function() {
     // Fungsi Delete Data (AJAX) dengan SweetAlert2 bergaya Bootstrap
     $('.delete-btn').on('click', function() {

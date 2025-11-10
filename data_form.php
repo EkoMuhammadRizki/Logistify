@@ -56,6 +56,8 @@ if (isset($_GET['id'])) {
           <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Kembali</a>
         </div>
 
+        <!-- Form CRUD (Create/Update) barang.
+             enctype="multipart/form-data" diperlukan untuk upload file foto_barang -->
         <form id="barangForm" action="proses_data.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="<?= $action; ?>">
             <input type="hidden" name="id" value="<?= $data['id']; ?>">
@@ -79,6 +81,7 @@ if (isset($_GET['id'])) {
                     <span class="input-group-text">Rp</span>
                     <input type="text" id="hargaRupiah" class="form-control" inputmode="numeric" placeholder="0" value="<?= $data['harga'] !== '' ? number_format((float)$data['harga'], 0, ',', '.') : '' ?>" required>
                 </div>
+                <!-- Hidden field harga menyimpan nilai numerik (tanpa format) untuk diproses di server -->
                 <input type="hidden" name="harga" id="hargaValue" value="<?= htmlspecialchars($data['harga']); ?>">
             </div>
 
@@ -86,7 +89,8 @@ if (isset($_GET['id'])) {
                 <label class="form-label">Foto Barang (Maks 10MB, JPG/PNG)</label>
                 <input type="file" name="foto_barang" class="form-control">
                 <?php if ($is_edit && $data['foto_barang']): ?>
- <p class="mt-2">Foto saat ini: <img src="uplouds/<?= $data['foto_barang']; ?>" style="width: 100px; object-fit: cover;"></p>
+                <!-- Pratayang foto saat ini untuk mode edit -->
+                <p class="mt-2">Foto saat ini: <img src="uplouds/<?= $data['foto_barang']; ?>" style="width: 100px; object-fit: cover;"></p>
                 <?php endif; ?>
             </div>
             

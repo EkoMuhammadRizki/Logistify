@@ -1,5 +1,6 @@
 <?php
 // auth.php - Fungsi-fungsi terkait autentikasi
+// Mencakup: pemeriksaan login (SESSION/COOKIE) dan guard redirect.
 
 // Mulai Session jika belum
 if (session_status() === PHP_SESSION_NONE) {
@@ -8,6 +9,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
 /**
  * Fungsi untuk memeriksa status login pengguna (SESSION dan COOKIE)
+ * - Mengembalikan true jika user terautentikasi.
+ * - Prioritas: cek SESSION dahulu, lalu COOKIE "remember_me".
+ * - Jika COOKIE valid, buat SESSION baru agar sesi konsisten.
  */
 function is_logged_in($koneksi) {
     // Cek Session
@@ -27,7 +31,7 @@ function is_logged_in($koneksi) {
         $user = $result->fetch_assoc();
 
         if ($user) {
-            // Cookie valid, buat session baru
+            // Cookie valid, buat session baru untuk menjaga konsistensi state
             $_SESSION['user_id'] = $user['id'];
             return true;
         }
@@ -38,6 +42,7 @@ function is_logged_in($koneksi) {
 
 /**
  * Fungsi untuk mengarahkan pengguna ke halaman login jika belum login
+ * Dipakai di halaman yang butuh autentikasi (dashboard, form data, laporan).
  */
 function require_login($koneksi) {
     if (!is_logged_in($koneksi)) {

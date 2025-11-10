@@ -1,4 +1,8 @@
 <?php
+// proses_data.php
+// Menangani CRUD Barang:
+// - Create/Update via form POST (dengan upload file foto)
+// - Delete via permintaan AJAX (jQuery $.ajax dari assets/js/custom.js)
 require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);
@@ -50,6 +54,7 @@ function handle_upload($file_array, $foto_lama = null) {
 }
 
 // Cek apakah request datang dari **POST** (untuk Create/Update)
+// CRUD: CREATE & UPDATE
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     
@@ -88,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     exit;
 } 
 // Cek apakah request datang dari **AJAX** (untuk Delete)
+// CRUD: DELETE via AJAX
 elseif ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_id'])) {
     // Diproses oleh AJAX
     header('Content-Type: application/json');

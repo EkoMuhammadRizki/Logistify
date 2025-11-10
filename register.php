@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif ($password !== $konfirmasi_password) {
         $error_message = "Konfirmasi password tidak cocok.";
     } else {
-        // 1. Cek apakah username atau email sudah terdaftar
+        // 1. Cek apakah username atau email sudah terdaftar (prepared statement untuk keamanan)
         $stmt_check = $koneksi->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
         $stmt_check->bind_param("ss", $username, $email);
         $stmt_check->execute();
@@ -32,15 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error_message = "Username atau Email sudah terdaftar.";
         } else {
             // 2. Hash Password (PENTING!)
+            // Gunakan password_hash agar password tersimpan aman di DB.
             $password_hashed = password_hash($password, PASSWORD_DEFAULT);
             
-            // 3. Query INSERT INTO users
+            // 3. Query INSERT INTO users (CRUD: CREATE)
             $stmt = $koneksi->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
             $stmt->bind_param("sss", $username, $password_hashed, $email);
             
             if ($stmt->execute()) {
                 // Pendaftaran berhasil
-                header('Location: login.php?status=loading');
+                header('Location: login.php?status=register_sukses');
                 exit;
             } else {
                 $error_message = "Pendaftaran gagal. Silakan coba lagi.";

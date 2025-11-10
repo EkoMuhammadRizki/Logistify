@@ -11,6 +11,7 @@ require_once 'functions/auth.php';
     <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4@5/bootstrap-4.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="assets/css/landing.css" rel="stylesheet">
+    <link href="assets/css/splash.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="assets/media/fav-icon.png">
     <link rel="shortcut icon" href="assets/media/fav-icon.png">
     <link rel="apple-touch-icon" href="assets/media/fav-icon.png">
@@ -18,6 +19,12 @@ require_once 'functions/auth.php';
     <meta name="theme-color" content="#28a745">
 </head>
 <body>
+  <div id="splash" class="splash-overlay">
+    <div class="splash-content">
+      <img class="splash-logo" src="assets/media/logistify.png" alt="Logo Logistify">
+      <div class="splash-title">Logistify</div>
+    </div>
+  </div>
   <div class="landing">
     <div class="video-bg">
       <video autoplay muted loop playsinline preload="auto">
@@ -101,4 +108,5 @@ require_once 'functions/auth.php';
       setTimeout(type, 500);
     })();
   </script>
+  <script src="assets/js/splash.js"></script>
 </body>

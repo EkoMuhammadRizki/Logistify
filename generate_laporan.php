@@ -1,4 +1,6 @@
 <?php
+// generate_laporan.php - Reporting PDF
+// Menghasilkan file PDF laporan data barang menggunakan Dompdf.
 require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);

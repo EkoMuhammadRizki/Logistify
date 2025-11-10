@@ -1,0 +1,52 @@
+/* Splash Screen for Logistify */
+/* Simple modern overlay with subtle animation and quick fade-out */
+
+.splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(1200px 800px at 20% 20%, rgba(40,167,69,0.18) 0%, rgba(17,17,17,0.92) 65%),
+              linear-gradient(180deg, rgba(17,17,17,0.95) 0%, rgba(17,17,17,0.96) 100%);
+  color: #fff;
+  backdrop-filter: blur(2px);
+}
+
+.splash-content {
+  text-align: center;
+  animation: splashPop 300ms ease-out;
+}
+
+.splash-logo {
+  width: 108px;
+  height: 108px;
+  object-fit: contain;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(40,167,69,0.35);
+}
+
+.splash-title {
+  margin-top: 14px;
+  font-weight: 700;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d5f5df;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+@keyframes splashPop {
+  0% { transform: translateY(12px) scale(0.94); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.splash-overlay.hide {
+  animation: splashFade 420ms ease-in forwards;
+}
+
+@keyframes splashFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
