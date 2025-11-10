@@ -4,7 +4,7 @@ require_once 'functions/auth.php';
 require_login($koneksi);
 
 $is_edit = false;
-$data = ['id' => '', 'nama_barang' => '', 'deskripsi' => '', 'stok' => '', 'harga' => '', 'foto_barang' => ''];
+$data = ['id' => '', 'nama_barang' => '', 'kode_barang' => '', 'kategori' => '', 'satuan' => '', 'supplier' => '', 'lokasi' => '', 'deskripsi' => '', 'stok' => '', 'harga' => '', 'foto_barang' => '', 'dokumen' => ''];
 $action = 'tambah';
 $title = 'Tambah Barang Baru';
 
@@ -26,6 +26,25 @@ if (isset($_GET['id'])) {
         header('Location: dashboard.php');
         exit;
     }
+}
+// Muat referensi Supplier & Lokasi jika tabel tersedia
+$supReady = false; $suppliers = [];
+if ($rs = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'suppliers'")) {
+  $row = $rs->fetch_assoc(); $supReady = ((int)$row['c'] > 0);
+  if ($supReady) {
+    if ($ls = $koneksi->query("SELECT id, nama_supplier FROM suppliers ORDER BY nama_supplier ASC")) {
+      while($r = $ls->fetch_assoc()){ $suppliers[] = $r; }
+    }
+  }
+}
+$locReady = false; $locations = [];
+if ($rs2 = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'locations'")) {
+  $row2 = $rs2->fetch_assoc(); $locReady = ((int)$row2['c'] > 0);
+  if ($locReady) {
+    if ($ll = $koneksi->query("SELECT id, nama_lokasi, kode_lokasi FROM locations ORDER BY nama_lokasi ASC")) {
+      while($r = $ll->fetch_assoc()){ $locations[] = $r; }
+    }
+  }
 }
 ?>
 <!DOCTYPE html>
@@ -56,8 +75,8 @@ if (isset($_GET['id'])) {
           <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Kembali</a>
         </div>
 
-        <!-- Form CRUD (Create/Update) barang.
-             enctype="multipart/form-data" diperlukan untuk upload file foto_barang -->
+        <!-- Form CRUD (Create/Update) barang via AJAX tanpa reload.
+             enctype="multipart/form-data" diperlukan untuk upload file foto_barang/dokumen -->
         <form id="barangForm" action="proses_data.php" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
             <input type="hidden" name="action" value="<?= $action; ?>">
             <input type="hidden" name="id" value="<?= $data['id']; ?>">
@@ -66,6 +85,51 @@ if (isset($_GET['id'])) {
             <div class="mb-3">
                 <label class="form-label">Nama Barang</label>
                 <input type="text" name="nama_barang" class="form-control" value="<?= htmlspecialchars($data['nama_barang']); ?>" required placeholder="Nama Barang">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Kode Barang</label>
+                <input type="text" name="kode_barang" class="form-control" value="<?= htmlspecialchars($data['kode_barang']); ?>" placeholder="Misal BRG-001">
+                <div class="form-text">Kosongkan bila ingin digenerate otomatis.</div>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Kategori</label>
+                <input type="text" name="kategori" class="form-control" value="<?= htmlspecialchars($data['kategori']); ?>" placeholder="Kategori">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Satuan</label>
+                <input type="text" name="satuan" class="form-control" value="<?= htmlspecialchars($data['satuan']); ?>" placeholder="Misal pcs, box">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Supplier</label>
+                <?php if ($supReady && count($suppliers) > 0): ?>
+                  <select name="supplier" class="form-select">
+                    <option value="">-- Pilih Supplier --</option>
+                    <?php foreach($suppliers as $sup): $sel = ($data['supplier'] === $sup['nama_supplier']) ? 'selected' : ''; ?>
+                      <option value="<?= htmlspecialchars($sup['nama_supplier']); ?>" <?= $sel; ?>><?= htmlspecialchars($sup['nama_supplier']); ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                  <div class="form-text">Kelola daftar di <a href="supplier.php" class="text-success">Supplier</a>.</div>
+                <?php else: ?>
+                  <input type="text" name="supplier" class="form-control" value="<?= htmlspecialchars($data['supplier']); ?>" placeholder="Nama supplier">
+                  <div class="form-text">Buat daftar di <a href="supplier.php" class="text-success">Supplier</a>.</div>
+                <?php endif; ?>
+              </div>
+            </div>
+            <div class="mb-3 mt-3">
+              <label class="form-label">Lokasi Penyimpanan</label>
+              <?php if ($locReady && count($locations) > 0): ?>
+                <select name="lokasi" class="form-select">
+                  <option value="">-- Pilih Lokasi --</option>
+                  <?php foreach($locations as $loc): $sel = ($data['lokasi'] === $loc['kode_lokasi']) ? 'selected' : ''; ?>
+                    <option value="<?= htmlspecialchars($loc['kode_lokasi']); ?>" <?= $sel; ?>>[<?= htmlspecialchars($loc['kode_lokasi']); ?>] <?= htmlspecialchars($loc['nama_lokasi']); ?></option>
+                  <?php endforeach; ?>
+                </select>
+                <div class="form-text">Kelola daftar di <a href="lokasi.php" class="text-success">Lokasi</a>.</div>
+              <?php else: ?>
+                <input type="text" name="lokasi" class="form-control" value="<?= htmlspecialchars($data['lokasi']); ?>" placeholder="Gudang/Rak">
+                <div class="form-text">Buat daftar di <a href="lokasi.php" class="text-success">Lokasi</a>.</div>
+              <?php endif; ?>
             </div>
             <div class="mb-3">
                 <label class="form-label">Deskripsi</label>
@@ -93,18 +157,22 @@ if (isset($_GET['id'])) {
                 <p class="mt-2">Foto saat ini: <img src="uplouds/<?= $data['foto_barang']; ?>" style="width: 100px; object-fit: cover;"></p>
                 <?php endif; ?>
             </div>
+            <div class="mb-3">
+                <label class="form-label">Dokumen Pendukung (opsional, PDF/JPG/PNG)</label>
+                <input type="file" name="dokumen" class="form-control">
+            </div>
             
             <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Simpan Data</button>
         </form>
       </div>
     </div>
     <script>
-      // Konfirmasi submit menggunakan SweetAlert2
+      // Submit via AJAX tanpa reload + konfirmasi menggunakan SweetAlert2
       document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('barangForm');
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
           e.preventDefault();
-          Swal.fire({
+          const confirm = await Swal.fire({
             title: 'Simpan data?',
             text: 'Pastikan data sudah benar sebelum disimpan.',
             icon: 'question',
@@ -113,11 +181,21 @@ if (isset($_GET['id'])) {
             cancelButtonText: 'Cek lagi',
             customClass: { confirmButton: 'btn btn-success', cancelButton: 'btn btn-secondary' },
             buttonsStyling: false
-          }).then(function(result){
-            if (result.isConfirmed) {
-              form.submit();
-            }
           });
+          if (!confirm.isConfirmed) return;
+          const fd = new FormData(form);
+          try {
+            const res = await fetch('proses_data.php', { method: 'POST', body: fd });
+            const json = await res.json();
+            if (json.status === 'success') {
+              await Swal.fire({ title: 'Berhasil', text: json.message, icon: 'success', confirmButtonText: 'OK', customClass:{confirmButton:'btn btn-success'}, buttonsStyling:false });
+              // Tetap di halaman tanpa reload; item kini tersedia untuk dipilih di menu Masuk/Keluar
+            } else {
+              throw new Error(json.message || 'Gagal menyimpan');
+            }
+          } catch(err) {
+            Swal.fire({ title:'Error', text: err.message, icon:'error', confirmButtonText:'OK' });
+          }
         });
       });
     </script>

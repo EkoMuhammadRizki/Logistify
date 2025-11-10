@@ -1,0 +1,110 @@
+<?php
+// proses_keluar.php — Endpoint transaksi Barang Keluar (migrate/create/delete)
+require_once 'config/koneksi.php';
+require_once 'functions/auth.php';
+require_login($koneksi);
+
+header('Content-Type: application/json');
+
+function json_ok($data = [], $message = 'OK') {
+  echo json_encode(['status' => 'success', 'message' => $message, 'data' => $data]);
+  exit;
+}
+function json_err($message = 'Error', $code = 400) {
+  http_response_code($code);
+  echo json_encode(['status' => 'error', 'message' => $message]);
+  exit;
+}
+
+function ensure_upload_dir() {
+  $dir = __DIR__ . DIRECTORY_SEPARATOR . 'uplouds';
+  if (!is_dir($dir)) { @mkdir($dir, 0777, true); }
+  return $dir;
+}
+function handle_upload_doc($field = 'dokumen') {
+  if (!isset($_FILES[$field]) || !is_array($_FILES[$field]) || $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+    return null; // optional
+  }
+  $allowed = ['pdf','jpg','jpeg','png'];
+  $name = $_FILES[$field]['name'];
+  $tmp = $_FILES[$field]['tmp_name'];
+  $size = $_FILES[$field]['size'];
+  $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+  if (!in_array($ext, $allowed)) { json_err('Dokumen harus pdf/jpg/jpeg/png'); }
+  if ($size > 4 * 1024 * 1024) { json_err('Ukuran dokumen max 4MB'); }
+  $dir = ensure_upload_dir();
+  $safeBase = preg_replace('/[^A-Za-z0-9_-]/','_', pathinfo($name, PATHINFO_FILENAME));
+  $fname = 'doc_' . date('Ymd_His') . '_' . $safeBase . '.' . $ext;
+  $dest = $dir . DIRECTORY_SEPARATOR . $fname;
+  if (!move_uploaded_file($tmp, $dest)) { json_err('Gagal menyimpan dokumen'); }
+  return $fname;
+}
+
+$action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : '');
+if ($action === '') { json_err('Aksi tidak dikenal'); }
+
+switch ($action) {
+  case 'migrate': {
+    $sql = "CREATE TABLE IF NOT EXISTS barang_keluar (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      tanggal_keluar DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      nama_barang VARCHAR(255) NOT NULL,
+      kode_barang VARCHAR(100) NOT NULL,
+      jumlah_keluar INT NOT NULL,
+      tujuan VARCHAR(255) NOT NULL,
+      dokumen VARCHAR(255) DEFAULT NULL,
+      keterangan TEXT DEFAULT NULL,
+      KEY idx_kode_barang (kode_barang),
+      KEY idx_tanggal (tanggal_keluar)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    if (!$koneksi->query($sql)) { json_err('Gagal membuat tabel: ' . $koneksi->error); }
+    json_ok([], 'Migrasi tabel barang_keluar selesai');
+  }
+  case 'create': {
+    $barang_id = isset($_POST['barang_id']) ? (int)$_POST['barang_id'] : 0;
+    if ($barang_id < 1) { json_err('Barang belum dipilih'); }
+    $resBarang = $koneksi->prepare("SELECT id, nama_barang, stok FROM barang WHERE id = ?");
+    $resBarang->bind_param('i', $barang_id);
+    $resBarang->execute();
+    $rowBr = $resBarang->get_result()->fetch_assoc();
+    if (!$rowBr) { json_err('Barang tidak ditemukan', 404); }
+
+    $tanggal = isset($_POST['tanggal_keluar']) && $_POST['tanggal_keluar'] !== '' ? $_POST['tanggal_keluar'] : null;
+    $jumlah = isset($_POST['jumlah_keluar']) ? (int)$_POST['jumlah_keluar'] : 0;
+    $tujuan = isset($_POST['tujuan']) ? trim($_POST['tujuan']) : '';
+    $keterangan = isset($_POST['keterangan']) ? trim($_POST['keterangan']) : null;
+    if ($jumlah < 1 || $tujuan === '') { json_err('Jumlah dan tujuan wajib diisi'); }
+    if ($rowBr['stok'] < $jumlah) { json_err('Stok tidak mencukupi'); }
+    $dokumen = handle_upload_doc('dokumen');
+
+    if ($tanggal === null || $tanggal === '') { $tanggal = date('Y-m-d H:i:s'); } else { $tanggal = str_replace('T', ' ', $tanggal) . ':00'; }
+
+    $stmt = $koneksi->prepare("INSERT INTO barang_keluar (tanggal_keluar, nama_barang, kode_barang, jumlah_keluar, tujuan, dokumen, keterangan) VALUES (?,?,?,?,?,?,?)");
+    $kodeResolved = 'BRG-' . str_pad((string)$rowBr['id'], 4, '0', STR_PAD_LEFT);
+    $stmt->bind_param('sssisss', $tanggal, $rowBr['nama_barang'], $kodeResolved, $jumlah, $tujuan, $dokumen, $keterangan);
+    if (!$stmt->execute()) { json_err('Gagal menyimpan: ' . $stmt->error); }
+
+    $up = $koneksi->prepare("UPDATE barang SET stok = stok - ? WHERE id = ?");
+    $up->bind_param('ii', $jumlah, $barang_id);
+    $up->execute();
+
+    json_ok(['id' => $stmt->insert_id], 'Transaksi barang keluar ditambahkan dan stok diperbarui');
+  }
+  case 'delete': {
+    $id = isset($_POST['id']) ? (int)$_POST['id'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
+    if ($id < 1) { json_err('ID tidak valid'); }
+    $stmt = $koneksi->prepare("SELECT dokumen FROM barang_keluar WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if (!$res || $res->num_rows === 0) { json_err('Data tidak ditemukan', 404); }
+    $row = $res->fetch_assoc();
+    $stmtDel = $koneksi->prepare("DELETE FROM barang_keluar WHERE id = ?");
+    $stmtDel->bind_param('i', $id);
+    if (!$stmtDel->execute()) { json_err('Gagal menghapus: ' . $stmtDel->error); }
+    if (!empty($row['dokumen'])) { @unlink(__DIR__ . DIRECTORY_SEPARATOR . 'uplouds' . DIRECTORY_SEPARATOR . $row['dokumen']); }
+    json_ok([], 'Transaksi barang keluar dihapus');
+  }
+  default: json_err('Aksi tidak didukung');
+}
+?>

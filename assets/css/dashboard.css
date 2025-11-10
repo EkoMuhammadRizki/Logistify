@@ -79,7 +79,8 @@ body {
   color: #ffffff;
 }
 .table-dashboard thead {
-  background: rgba(23, 166, 115, 0.25);
+  /* Disamakan dengan latar .chart-card untuk konsistensi visual */
+  background: rgba(16, 16, 16, 0.85);
 }
 .table-dashboard thead th {
   color: #ffffff;
@@ -100,7 +101,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: linear-gradient(135deg, #13684f 0%, #0f3d2e 100%);
+  /* Latar sticky header: sinkron dengan .chart-card */
+  background: rgba(16, 16, 16, 0.85);
   box-shadow: 0 2px 0 rgba(23, 166, 115, 0.25);
 }
 /* ===== Enhanced modern table theme ===== */
@@ -116,7 +118,8 @@ body {
   background: transparent;
 }
 .table-dashboard thead {
-  background: linear-gradient(135deg, #13684f 0%, #0f3d2e 100%);
+  /* Tema tabel modern: gunakan latar seragam seperti .chart-card */
+  background: rgba(16, 16, 16, 0.85);
   border-bottom: 2px solid rgba(23, 166, 115, 0.35);
 }
 .table-dashboard thead th {
@@ -124,6 +127,7 @@ body {
   border-color: rgba(255, 255, 255, 0.12);
   font-weight: 700;
   letter-spacing: 0.3px;
+  background: rgba(16, 16, 16, 0.85); /* selaras dengan .chart-card */
 }
 .table-dashboard tbody tr { background: rgba(255, 255, 255, 0.06); }
 .table-dashboard tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.09); }
@@ -168,3 +172,88 @@ body {
 /* Sections toggling */
 .content-section{display:none;}
 .content-section.active{display:block;}
+
+/* ===== Action buttons (Edit/Hapus) — themed to Logistify green ===== */
+/* Edit button: gunakan aksen hijau tema dan bentuk pill */
+.btn.btn-warning.btn-sm {
+  background: #17a673;
+  color: #0f3d2e;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  box-shadow: 0 8px 20px rgba(23, 166, 115, 0.35);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+.btn.btn-warning.btn-sm:hover,
+.btn.btn-warning.btn-sm:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 10px 26px rgba(23, 166, 115, 0.45);
+}
+
+/* Hapus button: tetap merah untuk kejelasan aksi destruktif, serasi bentuk/efek */
+.btn.btn-danger.btn-sm {
+  background: rgba(220, 53, 69, 0.85);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  box-shadow: 0 8px 20px rgba(220, 53, 69, 0.35);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+.btn.btn-danger.btn-sm:hover,
+.btn.btn-danger.btn-sm:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 10px 26px rgba(220, 53, 69, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn.btn-warning.btn-sm,
+  .btn.btn-danger.btn-sm { transition: none; }
+}
+
+/* ===== Global buttons: Simpan (success) & Kembali (outline-light) ===== */
+/* Simpan Data — gunakan palet hijau utama */
+.btn.btn-success {
+  background: #17a673;
+  color: #0f3d2e;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  box-shadow: 0 8px 20px rgba(23, 166, 115, 0.35);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+.btn.btn-success:hover,
+.btn.btn-success:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 10px 26px rgba(23, 166, 115, 0.45);
+}
+
+/* Tombol Kembali — outline terang dengan bentuk pill dan efek halus */
+.btn.btn-outline-light {
+  color: #ffffff;
+  border-color: rgba(255,255,255,0.75);
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  background: transparent;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+.btn.btn-outline-light:hover,
+.btn.btn-outline-light:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.12);
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.18),
+    0 0 0 3px rgba(23, 166, 115, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn.btn-success,
+  .btn.btn-outline-light { transition: none; }
+}

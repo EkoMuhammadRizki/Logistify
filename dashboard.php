@@ -1,4 +1,8 @@
 <?php
+// dashboard.php — Halaman utama setelah login
+// Fitur: ringkasan stok (total/menipis/habis), grafik aktivitas, tautan aksi,
+// dan tombol CRUD (Tambah, Edit, Hapus) yang bertema hijau Logistify.
+// Menggunakan guard login, mengambil data dari DB, dan menata UI via dashboard.css.
 require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 
@@ -83,12 +87,12 @@ if ($sumRes = $koneksi->query($sumQuery)) {
           </div>
           <nav class="nav flex-column">
             <a class="nav-link active" href="#" data-section="dashboardHome">Dashboard</a>
-            <a class="nav-link" href="data_form.php"><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
+    <a class="nav-link" href="data_form.php" data-bs-toggle="tooltip" title="Daftarkan item baru ke master Data Barang."><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
             <a class="nav-link" href="data_barang.php">Data Barang</a>
-            <a class="nav-link" href="#" onclick="return false;">Barang Masuk</a>
-            <a class="nav-link" href="#" onclick="return false;">Barang Keluar</a>
-            <a class="nav-link" href="#" onclick="return false;">Supplier</a>
-            <a class="nav-link" href="#" onclick="return false;">Lokasi</a>
+    <a class="nav-link" href="barang_masuk.php" data-bs-toggle="tooltip" title="Catat penambahan stok untuk barang yang sudah ada.">Barang Masuk</a>
+            <a class="nav-link" href="barang_keluar.php" data-bs-toggle="tooltip" title="Catat pengurangan stok untuk barang yang sudah ada.">Barang Keluar</a>
+            <a class="nav-link" href="supplier.php" data-bs-toggle="tooltip" title="Kelola daftar pemasok barang.">Supplier</a>
+            <a class="nav-link" href="lokasi.php" data-bs-toggle="tooltip" title="Kelola lokasi penyimpanan gudang.">Lokasi</a>
             <a class="nav-link" href="generate_laporan.php" target="_blank">Laporan PDF</a>
           </nav>
           <hr>
@@ -186,18 +190,42 @@ if ($sumRes = $koneksi->query($sumQuery)) {
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form id="formMasuk">
+            <form id="formMasuk" enctype="multipart/form-data">
               <div class="mb-2">
-                <label class="form-label">Nama Barang</label>
-                <input type="text" class="form-control" placeholder="Nama Barang" required>
+                <label class="form-label">Tanggal Barang Masuk</label>
+                <input type="datetime-local" name="tanggal_masuk" class="form-control">
               </div>
               <div class="mb-2">
-                <label class="form-label">Jumlah</label>
-                <input type="number" class="form-control" placeholder="0" min="1" required>
+                <label class="form-label">Nama Barang</label>
+                <input type="text" name="nama_barang" class="form-control" placeholder="Nama Barang" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Kode Barang</label>
+                <input type="text" name="kode_barang" class="form-control" placeholder="Kode unik barang" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Jumlah Masuk</label>
+                <input type="number" name="jumlah_masuk" class="form-control" placeholder="0" min="1" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Satuan (opsional)</label>
+                <input type="text" name="satuan" class="form-control" placeholder="pcs, box, pack, dll">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Supplier</label>
+                <input type="text" name="supplier" class="form-control" placeholder="Nama supplier" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Lokasi Penyimpanan</label>
+                <input type="text" name="lokasi" class="form-control" placeholder="Gudang/Rak" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Dokumen Pendukung (opsional)</label>
+                <input type="file" name="dokumen" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
               </div>
               <div class="mb-2">
                 <label class="form-label">Keterangan</label>
-                <input type="text" class="form-control" placeholder="Catatan (opsional)">
+                <textarea name="keterangan" class="form-control" placeholder="Catatan tambahan"></textarea>
               </div>
             </form>
           </div>
@@ -422,5 +450,12 @@ if ($sumRes = $koneksi->query($sumQuery)) {
       });
     </script>
     <script src="assets/js/loading-bar.js"></script>
-  </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        var triggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        triggerList.forEach(function(el){ new bootstrap.Tooltip(el); });
+      });
+    </script>
+</body>
 </html>

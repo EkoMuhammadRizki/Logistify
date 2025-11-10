@@ -6,6 +6,8 @@
 require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);
+// Semua endpoint merespon JSON agar mendukung AJAX tanpa reload
+header('Content-Type: application/json');
 
 // Normalisasi nilai harga (Rupiah formatted string -> float numeric)
 function normalize_price($input) {
@@ -53,42 +55,95 @@ function handle_upload($file_array, $foto_lama = null) {
     }
 }
 
+// Upload dokumen opsional (pdf/jpg/jpeg/png) untuk master barang
+function handle_upload_doc($file_array) {
+    if (!isset($file_array) || !is_array($file_array) || ($file_array['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return ['status' => 'success', 'filename' => null];
+    }
+    $target_dir = __DIR__ . DIRECTORY_SEPARATOR . 'uplouds' . DIRECTORY_SEPARATOR;
+    if (!is_dir($target_dir)) { @mkdir($target_dir, 0777, true); }
+    $file_name = uniqid('doc_') . basename($file_array["name"]);
+    $target_file = $target_dir . $file_name;
+    $ext = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+    $allowed = ['pdf','jpg','jpeg','png'];
+    if (!in_array($ext, $allowed)) { return ['status'=>'error','message'=>'Dokumen harus pdf/jpg/jpeg/png']; }
+    if (($file_array["size"] ?? 0) > 10 * 1024 * 1024) { return ['status'=>'error','message'=>'Ukuran dokumen max 10MB']; }
+    if (move_uploaded_file($file_array["tmp_name"], $target_file)) {
+        return ['status' => 'success', 'filename' => $file_name];
+    }
+    return ['status'=>'error','message'=>'Gagal mengunggah dokumen'];
+}
+
+// Pastikan kolom tambahan tersedia di tabel barang
+function ensure_barang_columns(mysqli $db) {
+    $res = $db->query("SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang'");
+    $cols = [];
+    if ($res) { while($r = $res->fetch_assoc()) { $cols[$r['COLUMN_NAME']] = true; } }
+    if (!isset($cols['kode_barang'])) { $db->query("ALTER TABLE barang ADD COLUMN kode_barang VARCHAR(100) DEFAULT NULL"); }
+    if (!isset($cols['kategori'])) { $db->query("ALTER TABLE barang ADD COLUMN kategori VARCHAR(100) DEFAULT NULL"); }
+    if (!isset($cols['satuan'])) { $db->query("ALTER TABLE barang ADD COLUMN satuan VARCHAR(50) DEFAULT NULL"); }
+    if (!isset($cols['supplier'])) { $db->query("ALTER TABLE barang ADD COLUMN supplier VARCHAR(255) DEFAULT NULL"); }
+    if (!isset($cols['lokasi'])) { $db->query("ALTER TABLE barang ADD COLUMN lokasi VARCHAR(255) DEFAULT NULL"); }
+    if (!isset($cols['dokumen'])) { $db->query("ALTER TABLE barang ADD COLUMN dokumen VARCHAR(255) DEFAULT NULL"); }
+}
+
 // Cek apakah request datang dari **POST** (untuk Create/Update)
 // CRUD: CREATE & UPDATE
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
+    ensure_barang_columns($koneksi);
     
     // --- CREATE (Tambah Data) ---
     if ($action == 'tambah') {
-        $upload_result = handle_upload($_FILES['foto_barang']); // **UPLOUD FILE**
-        
-        if ($upload_result['status'] == 'error') {
-            die("Error Upload: " . $upload_result['message']);
-        }
+        $upload_foto = handle_upload($_FILES['foto_barang']);
+        if ($upload_foto['status'] == 'error') { echo json_encode(['status'=>'error','message'=>$upload_foto['message']]); exit; }
+        $upload_doc = handle_upload_doc($_FILES['dokumen'] ?? []);
+        if ($upload_doc['status'] == 'error') { echo json_encode(['status'=>'error','message'=>$upload_doc['message']]); exit; }
 
+        $nama = trim($_POST['nama_barang'] ?? '');
+        $kode = trim($_POST['kode_barang'] ?? '');
+        $kategori = trim($_POST['kategori'] ?? '');
+        $satuan = trim($_POST['satuan'] ?? '');
+        $supplier = trim($_POST['supplier'] ?? '');
+        $lokasi = trim($_POST['lokasi'] ?? '');
+        $deskripsi = trim($_POST['deskripsi'] ?? '');
+        $stok = (int)($_POST['stok'] ?? 0);
         $harga = normalize_price($_POST['harga'] ?? '');
-        $stmt = $koneksi->prepare("INSERT INTO barang (nama_barang, deskripsi, stok, harga, foto_barang) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssids", $_POST['nama_barang'], $_POST['deskripsi'], $_POST['stok'], $harga, $upload_result['filename']);
-        $stmt->execute();
-        
-        header('Location: dashboard.php?status=tambah_sukses');
+        if ($nama === '') { echo json_encode(['status'=>'error','message'=>'Nama barang wajib diisi']); exit; }
+
+        $stmt = $koneksi->prepare("INSERT INTO barang (nama_barang, kode_barang, kategori, satuan, supplier, lokasi, deskripsi, stok, harga, foto_barang, dokumen) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+        $foto = $upload_foto['filename'];
+        $doc = $upload_doc['filename'];
+        $stmt->bind_param("sssssssidss", $nama, $kode, $kategori, $satuan, $supplier, $lokasi, $deskripsi, $stok, $harga, $foto, $doc);
+        if (!$stmt->execute()) { echo json_encode(['status'=>'error','message'=>'Gagal menyimpan: '.$stmt->error]); exit; }
+        echo json_encode(['status'=>'success','message'=>'Barang ditambahkan','data'=>['id'=>$stmt->insert_id]]); exit;
 
     // --- UPDATE (Edit Data) ---
     } elseif ($action == 'edit') {
-        $foto_lama = $_POST['foto_lama'];
-        $upload_result = handle_upload($_FILES['foto_barang'], $foto_lama); // **UPLOUD FILE**
+        $foto_lama = $_POST['foto_lama'] ?? null;
+        $upload_foto = handle_upload($_FILES['foto_barang'], $foto_lama);
+        if ($upload_foto['status'] == 'error') { echo json_encode(['status'=>'error','message'=>$upload_foto['message']]); exit; }
+        $upload_doc = handle_upload_doc($_FILES['dokumen'] ?? []);
+        if ($upload_doc['status'] == 'error') { echo json_encode(['status'=>'error','message'=>$upload_doc['message']]); exit; }
+        $foto_baru = $upload_foto['filename'];
+        $doc_baru = $upload_doc['filename'];
 
-        if ($upload_result['status'] == 'error') {
-            die("Error Upload: " . $upload_result['message']);
-        }
-        $foto_baru = $upload_result['filename'];
-
+        $nama = trim($_POST['nama_barang'] ?? '');
+        $kode = trim($_POST['kode_barang'] ?? '');
+        $kategori = trim($_POST['kategori'] ?? '');
+        $satuan = trim($_POST['satuan'] ?? '');
+        $supplier = trim($_POST['supplier'] ?? '');
+        $lokasi = trim($_POST['lokasi'] ?? '');
+        $deskripsi = trim($_POST['deskripsi'] ?? '');
+        $stok = (int)($_POST['stok'] ?? 0);
         $harga = normalize_price($_POST['harga'] ?? '');
-        $stmt = $koneksi->prepare("UPDATE barang SET nama_barang=?, deskripsi=?, stok=?, harga=?, foto_barang=? WHERE id=?");
-        $stmt->bind_param("ssidsi", $_POST['nama_barang'], $_POST['deskripsi'], $_POST['stok'], $harga, $foto_baru, $_POST['id']);
-        $stmt->execute();
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id < 1) { echo json_encode(['status'=>'error','message'=>'ID tidak valid']); exit; }
 
-        header('Location: dashboard.php?status=edit_sukses');
+        $stmt = $koneksi->prepare("UPDATE barang SET nama_barang=?, kode_barang=?, kategori=?, satuan=?, supplier=?, lokasi=?, deskripsi=?, stok=?, harga=?, foto_barang=?, dokumen=? WHERE id=?");
+        $stmt->bind_param("sssssssidssi", $nama, $kode, $kategori, $satuan, $supplier, $lokasi, $deskripsi, $stok, $harga, $foto_baru, $doc_baru, $id);
+        if (!$stmt->execute()) { echo json_encode(['status'=>'error','message'=>'Gagal mengupdate: '.$stmt->error]); exit; }
+        echo json_encode(['status'=>'success','message'=>'Barang diperbarui']); exit;
     }
     exit;
 } 
@@ -121,7 +176,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_id'])) {
     exit;
 }
 
-// Jika request tidak valid (tidak POST), redirect ke dashboard
-header('Location: dashboard.php');
+// Jika request tidak valid
+echo json_encode(['status'=>'error','message'=>'Metode tidak didukung']);
 exit;
 ?>

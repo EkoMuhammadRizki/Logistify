@@ -35,6 +35,7 @@ $result = $koneksi->query($query);
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="m-0">Data Barang 📦</h2>
         <div class="d-flex gap-2">
+          <a href="data_form.php" class="btn btn-success"><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
           <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-grid"></i> Dashboard</a>
         </div>
       </div>
@@ -48,10 +49,13 @@ $result = $koneksi->query($query);
           <tr>
             <th>No</th>
             <th>Nama Barang</th>
-            <th>Deskripsi</th>
+            <th>Kode</th>
+            <th>Kategori</th>
+            <th>Satuan</th>
             <th>Stok</th>
             <th>Harga</th>
-            <th>Kode Barang</th>
+            <th>Lokasi</th>
+            <th>Supplier</th>
             <th>Foto</th>
             <th>Aksi</th>
           </tr>
@@ -67,10 +71,13 @@ $result = $koneksi->query($query);
           <tr>
             <td><?= $no++; ?></td>
             <td data-search="true"><?= htmlspecialchars($row['nama_barang']); ?></td>
-            <td data-search="true"><?= htmlspecialchars($row['deskripsi'] ?? ''); ?></td>
+            <td data-search="true"><?= htmlspecialchars($kode); ?></td>
+            <td data-search="true"><?= htmlspecialchars($row['kategori'] ?? ''); ?></td>
+            <td><?= htmlspecialchars($row['satuan'] ?? ''); ?></td>
             <td data-col="stok"><?= (int)$row['stok']; ?></td>
             <td><?= 'Rp ' . number_format($harga, 0, ',', '.'); ?></td>
-            <td data-search="true"><?= htmlspecialchars($kode); ?></td>
+            <td><?= htmlspecialchars($row['lokasi'] ?? ''); ?></td>
+            <td><?= htmlspecialchars($row['supplier'] ?? ''); ?></td>
             <td>
               <?php if (!empty($row['foto_barang'])): ?>
                 <img src="uplouds/<?= htmlspecialchars($row['foto_barang']); ?>" class="thumb" alt="Foto Barang">
@@ -80,7 +87,7 @@ $result = $koneksi->query($query);
             </td>
             <td>
               <a href="data_form.php?id=<?= $row['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-              <button class="btn btn-danger btn-sm delete-btn" data-id="<?= $row['id']; ?>">Hapus (AJAX)</button>
+              <button class="btn btn-danger btn-sm delete-btn" data-id="<?= $row['id']; ?>">Hapus</button>
             </td>
           </tr>
           <?php endwhile; ?>

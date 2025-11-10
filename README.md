@@ -21,6 +21,24 @@ Logistify adalah aplikasi web sederhana untuk mencatat data barang, mengelola st
 - Bootstrap
   - UI menggunakan Bootstrap 5 + Bootstrap Icons. SweetAlert2 memakai tema Bootstrap.
 
+## Fitur Terbaru (Belum Terdokumentasi Sebelumnya)
+
+- Loading Bar Overlay (Transisi Login → Dashboard)
+  - Bar hijau transparan sebagai indikator perpindahan halaman (`assets/js/loading-bar.js`, `assets/css/loading-bar.css`).
+  - Mengurangi kesan “blank” saat autentikasi selesai dan dashboard dimuat.
+- Splash Screen Landing
+  - Intro singkat saat halaman `index.php` dibuka (`assets/js/splash.js`, `assets/css/splash.css`).
+  - Menampilkan logo/brand sebelum konten utama ditampilkan.
+- Peningkatan UI Dashboard
+  - Interaksi dan helper UI terpisah di `assets/js/dashboard-ui.js` untuk menjaga kode modular.
+- Validasi ID & Popup
+  - Validasi format ID/form khusus di `assets/js/validation-id.js`.
+  - Validasi berbasis popup (SweetAlert2) di `assets/js/validation-popup.js` dengan pesan konsisten.
+- Pelacakan Counter Laporan
+  - File counter per hari di `uplouds/` (misal `laporan_count_YYYY-MM-DD.txt`) untuk menandai jumlah unduhan/generasi laporan.
+- Manifest Web
+  - `manifest.webmanifest` untuk metadata aplikasi web (ikon, nama, dan pengaturan display) agar lebih siap dipakai sebagai PWA ringan.
+
 ## Struktur Proyek (ringkas)
 
 - `config/koneksi.php` — Konfigurasi koneksi database MySQL.
@@ -33,6 +51,11 @@ Logistify adalah aplikasi web sederhana untuk mencatat data barang, mengelola st
 - `proses_data.php` — Handler CRUD: Create/Update (POST), Delete (AJAX), termasuk upload file.
 - `generate_laporan.php` — Rendering laporan PDF memakai Dompdf.
 - `assets/js/custom.js` — AJAX delete dengan jQuery dan SweetAlert2.
+- `assets/js/loading-bar.js` — Mengelola overlay progress saat transisi halaman.
+- `assets/js/splash.js` — Menangani splash/intro di landing.
+- `assets/js/dashboard-ui.js` — Utilitas UI khusus dashboard.
+- `assets/js/validation-id.js` — Validasi ID/form sesuai aturan bisnis.
+- `assets/js/validation-popup.js` — Validasi dengan feedback popup yang konsisten.
 - `assets/css/*.css` — Styling landing, dashboard, auth, dan loader.
 - `uplouds/` — Menyimpan file upload (foto barang) & counter nama file laporan.
 - `libs/dompdf/` — Vendor Dompdf untuk generasi PDF.
@@ -95,7 +118,15 @@ CREATE TABLE barang (
 - Bootstrap & Interaksi
   - Sebagian besar halaman menyertakan Bootstrap 5 & Icons via CDN.
   - SweetAlert2 dipakai untuk konfirmasi dan pesan sukses/gagal.
-  - Loader sederhana saat login/masuk dashboard.
+  - Loader (loading bar overlay) saat login/masuk dashboard.
+  - Splash (intro singkat) di landing untuk pengalaman visual yang lebih halus.
+
+## Catatan Komentar di Kode
+
+- Setiap file inti kini memiliki komentar penjelas di bagian atas yang menjabarkan:
+  - Fitur yang diimplementasikan oleh file tersebut.
+  - Fungsi utama di dalam file dan alur eksekusinya.
+- Pada blok-blok penting (AJAX, validasi, render PDF, autentikasi), ditambahkan komentar inline untuk menjelaskan apa yang terjadi dan alasan desainnya.
 
 ## Catatan Keamanan & Praktik Baik
 
@@ -110,6 +141,7 @@ CREATE TABLE barang (
 - Validasi sisi server lebih ketat untuk field numerik/harga.
 - Batasi ukuran dan resolusi gambar yang diunggah.
 - Pagination pada dashboard untuk jumlah data besar.
+- Tambahkan service worker untuk cache aset statis jika ingin PWA penuh.
 
 ## Lisensi
 

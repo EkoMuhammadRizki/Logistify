@@ -1,4 +1,7 @@
 <?php
+// index.php — Halaman Landing Logistify
+// Menampilkan splash singkat, video latar, dan CTA untuk Register/Login.
+// Memuat tema hijau (landing.css) dan animasi caret judul hero.
 require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 ?>

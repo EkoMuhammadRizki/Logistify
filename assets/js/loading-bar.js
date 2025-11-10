@@ -7,12 +7,18 @@
   function showLoading() {
     var overlay = document.getElementById('loadingBarOverlay');
     if (!overlay) return;
+    // Kunci tampilan dashboard agar tidak terlihat hingga loading selesai
+    document.body.classList.add('lb-hide-content');
+    // Opsional: cegah scroll sementara
+    var html = document.documentElement;
+    var prevOverflow = html.style.overflow;
+    html.style.overflow = 'hidden';
     overlay.style.display = 'flex';
 
     var bar = overlay.querySelector('.loading-bar');
     var percentEl = overlay.querySelector('.loading-percent');
     var percent = 0;
-    var duration = 900; // ms
+    var duration = 1200; // ms — sedikit lebih lama agar blur terasa
     var step = 18; // ms per tick
     var inc = 100 / (duration / step);
     var timer = setInterval(function () {
@@ -24,7 +30,12 @@
         // Small hold then fade
         setTimeout(function () {
           overlay.classList.add('hide');
-          setTimeout(function () { overlay.style.display = 'none'; }, 420);
+          setTimeout(function () {
+            overlay.style.display = 'none';
+            // Lepas kunci konten setelah overlay benar-benar hilang
+            document.body.classList.remove('lb-hide-content');
+            html.style.overflow = prevOverflow || '';
+          }, 420);
         }, 120);
       }
     }, step);

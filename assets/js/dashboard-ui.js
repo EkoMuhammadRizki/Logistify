@@ -49,3 +49,71 @@
   // Expose filter for external calls (e.g., when switching sections)
   window.logiFilterTable = filterTable;
 })();
+
+// Grafik Aktivitas Stok (Chart.js) — dinamis via AJAX
+(function(){
+  var chartEl = document.getElementById('stockChart');
+  if (!chartEl || typeof Chart === 'undefined') { return; }
+
+  var stockChart = null;
+  function render(data){
+    var labels = data.labels || ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    var masuk = data.masuk || Array(12).fill(0);
+    var keluar = data.keluar || Array(12).fill(0);
+    var cfg = {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Barang Masuk',
+            data: masuk,
+            backgroundColor: 'rgba(40, 167, 69, 0.6)',
+            borderColor: 'rgba(40, 167, 69, 1)',
+            borderWidth: 1
+          },
+          {
+            label: 'Barang Keluar',
+            data: keluar,
+            backgroundColor: 'rgba(30, 126, 52, 0.9)',
+            borderColor: 'rgba(30, 126, 52, 1)',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'Jumlah barang' } },
+          x: { title: { display: true, text: 'Bulan' } }
+        },
+        plugins: {
+          legend: { labels: { color: '#e9ecef' } },
+          title: { display: true, text: 'Aktivitas Stok ' + (data.year || ''), color: '#e9ecef' }
+        }
+      }
+    };
+    if (!stockChart) { stockChart = new Chart(chartEl.getContext('2d'), cfg); }
+    else {
+      stockChart.data.labels = labels;
+      stockChart.data.datasets[0].data = masuk;
+      stockChart.data.datasets[1].data = keluar;
+      stockChart.update();
+    }
+  }
+
+  function fetchData(){
+    fetch('stats_aktivitas.php')
+      .then(function(res){ return res.json(); })
+      .then(function(json){ if (json && json.status === 'success') render(json); })
+      .catch(function(){ /* diamkan bila gagal */ });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fetchData);
+  } else { fetchData(); }
+
+  // Ekspor untuk refresh setelah transaksi masuk/keluar
+  window.refreshStockChart = fetchData;
+})();

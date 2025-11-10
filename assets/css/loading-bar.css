@@ -1,4 +1,6 @@
-/* Transparent green loading bar overlay (login → dashboard) */
+/* Loading bar overlay (login → dashboard)
+   Tujuan: Menutupi tampilan dashboard sementara (blur hijau) hingga progress 100%.
+   Setelah penuh, overlay memudar dan dashboard terlihat. */
 
 .loading-overlay {
   position: fixed;
@@ -7,8 +9,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(40, 167, 69, 0.18);
-  backdrop-filter: blur(1px);
+  /* Overlay hijau + kedalaman gelap agar konten di bawah tidak terlihat jelas */
+  background:
+    radial-gradient(1200px 800px at 20% 20%, rgba(40,167,69,0.22) 0%, rgba(17,17,17,0.92) 65%),
+    linear-gradient(180deg, rgba(17,17,17,0.95) 0%, rgba(17,17,17,0.96) 100%);
+  backdrop-filter: blur(6px) saturate(110%);
+  pointer-events: all;
 }
 
 .loading-box {
@@ -70,4 +76,11 @@
 @keyframes lbFade {
   0% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+/* Sembunyikan konten dashboard saat overlay tampil */
+.lb-hide-content .dashboard-container,
+.lb-hide-content .app-shell,
+.lb-hide-content main {
+  visibility: hidden;
 }
