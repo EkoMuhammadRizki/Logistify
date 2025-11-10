@@ -1,0 +1,96 @@
+<?php
+require_once 'config/koneksi.php';
+require_once 'functions/auth.php';
+
+// Akses hanya untuk user yang sudah login
+if (!is_logged_in($koneksi)) {
+  header('Location: login.php');
+  exit;
+}
+
+// Ambil data barang
+$query = "SELECT * FROM barang ORDER BY id DESC";
+$result = $koneksi->query($query);
+?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Logistify - Data Barang</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4@5/bootstrap-4.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="assets/css/dashboard.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/media/fav-icon.png">
+  <meta name="theme-color" content="#28a745">
+</head>
+<body>
+  <div class="brand-bar">
+    <div class="logo-dummy"><img src="assets/media/logistify.png" alt="Logo Logistify"></div>
+    <div class="site-title">Logistify</div>
+  </div>
+
+  <div class="container mt-3">
+    <div class="dashboard-container">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="m-0">Data Barang 📦</h2>
+        <div class="d-flex gap-2">
+          <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-grid"></i> Dashboard</a>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input type="text" id="searchInput" class="form-control" placeholder="Cari nama, deskripsi, atau kode...">
+      </div>
+
+      <table class="table table-bordered table-striped table-dashboard">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Barang</th>
+            <th>Deskripsi</th>
+            <th>Stok</th>
+            <th>Harga</th>
+            <th>Kode Barang</th>
+            <th>Foto</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="data-table">
+          <?php $no = 1; while($row = $result->fetch_assoc()): ?>
+          <?php 
+            $kode = isset($row['kode_barang']) && $row['kode_barang'] !== '' 
+              ? $row['kode_barang'] 
+              : 'BRG-' . str_pad((string)$row['id'], 4, '0', STR_PAD_LEFT);
+            $harga = isset($row['harga']) && $row['harga'] !== '' ? (float)$row['harga'] : 0;
+          ?>
+          <tr>
+            <td><?= $no++; ?></td>
+            <td data-search="true"><?= htmlspecialchars($row['nama_barang']); ?></td>
+            <td data-search="true"><?= htmlspecialchars($row['deskripsi'] ?? ''); ?></td>
+            <td data-col="stok"><?= (int)$row['stok']; ?></td>
+            <td><?= 'Rp ' . number_format($harga, 0, ',', '.'); ?></td>
+            <td data-search="true"><?= htmlspecialchars($kode); ?></td>
+            <td>
+              <?php if (!empty($row['foto_barang'])): ?>
+                <img src="uplouds/<?= htmlspecialchars($row['foto_barang']); ?>" class="thumb" alt="Foto Barang">
+              <?php else: ?>
+                Tidak ada foto
+              <?php endif; ?>
+            </td>
+            <td>
+              <a href="data_form.php?id=<?= $row['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+              <button class="btn btn-danger btn-sm delete-btn" data-id="<?= $row['id']; ?>">Hapus (AJAX)</button>
+            </td>
+          </tr>
+          <?php endwhile; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="assets/js/custom.js"></script>
+  <script src="assets/js/dashboard-ui.js"></script>
+</body>
+</html>

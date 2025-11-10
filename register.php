@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       </div>
       <h1 class="auth-title">Register</h1>
       <?php if ($error_message): ?><div class="alert-inline"><?= $error_message; ?></div><?php endif; ?>
-        <form method="POST" autocomplete="on">
+        <form method="POST" autocomplete="on" class="needs-validation" novalidate>
           <div class="input-wrap">
             <span class="input-icon"><i class="bi bi-person"></i></span>
             <input type="text" name="username" placeholder="Username" required value="<?= htmlspecialchars($username ?? ''); ?>">
@@ -103,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </form>
       </div>
     </div>
+    <script src="assets/js/validation-popup.js"></script>
 </body>
 <script>
 (function() {

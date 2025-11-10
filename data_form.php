@@ -58,14 +58,14 @@ if (isset($_GET['id'])) {
 
         <!-- Form CRUD (Create/Update) barang.
              enctype="multipart/form-data" diperlukan untuk upload file foto_barang -->
-        <form id="barangForm" action="proses_data.php" method="POST" enctype="multipart/form-data">
+        <form id="barangForm" action="proses_data.php" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
             <input type="hidden" name="action" value="<?= $action; ?>">
             <input type="hidden" name="id" value="<?= $data['id']; ?>">
             <input type="hidden" name="foto_lama" value="<?= $data['foto_barang']; ?>">
 
             <div class="mb-3">
                 <label class="form-label">Nama Barang</label>
-                <input type="text" name="nama_barang" class="form-control" value="<?= htmlspecialchars($data['nama_barang']); ?>" required>
+                <input type="text" name="nama_barang" class="form-control" value="<?= htmlspecialchars($data['nama_barang']); ?>" required placeholder="Nama Barang">
             </div>
             <div class="mb-3">
                 <label class="form-label">Deskripsi</label>
@@ -73,13 +73,13 @@ if (isset($_GET['id'])) {
             </div>
             <div class="mb-3">
                 <label class="form-label">Stok</label>
-                <input type="number" name="stok" class="form-control" value="<?= $data['stok']; ?>" required>
+                <input type="number" name="stok" class="form-control" value="<?= $data['stok']; ?>" required placeholder="Stok" min="0" step="1">
             </div>
             <div class="mb-3">
                 <label class="form-label">Harga</label>
                 <div class="input-group">
                     <span class="input-group-text">Rp</span>
-                    <input type="text" id="hargaRupiah" class="form-control" inputmode="numeric" placeholder="0" value="<?= $data['harga'] !== '' ? number_format((float)$data['harga'], 0, ',', '.') : '' ?>" required>
+                    <input type="text" id="hargaRupiah" class="form-control" inputmode="numeric" placeholder="Harga" value="<?= $data['harga'] !== '' ? number_format((float)$data['harga'], 0, ',', '.') : '' ?>" required>
                 </div>
                 <!-- Hidden field harga menyimpan nilai numerik (tanpa format) untuk diproses di server -->
                 <input type="hidden" name="harga" id="hargaValue" value="<?= htmlspecialchars($data['harga']); ?>">
@@ -121,6 +121,7 @@ if (isset($_GET['id'])) {
         });
       });
     </script>
+    <script src="assets/js/validation-popup.js"></script>
 </body>
 <script>
 // Format input harga sebagai Rupiah (ID) dan sinkronkan nilai numerik ke hidden field

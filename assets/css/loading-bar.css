@@ -1,0 +1,73 @@
+/* Transparent green loading bar overlay (login → dashboard) */
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(40, 167, 69, 0.18);
+  backdrop-filter: blur(1px);
+}
+
+.loading-box {
+  width: min(540px, 86vw);
+  background: rgba(14, 14, 14, 0.8);
+  border: 1px solid rgba(40, 167, 69, 0.35);
+  border-radius: 14px;
+  padding: 18px 16px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.loading-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.loading-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(40,167,69,0.35);
+}
+
+.loading-title {
+  color: #d5f5df;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.loading-track {
+  width: 100%;
+  height: 12px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.loading-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #2ecc71 0%, #28a745 100%);
+}
+
+.loading-percent {
+  margin-top: 8px;
+  color: #b9e9c6;
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.loading-overlay.hide {
+  animation: lbFade 420ms ease-in forwards;
+}
+
+@keyframes lbFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}

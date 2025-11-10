@@ -11,6 +11,39 @@ if (!is_logged_in($koneksi)) {
 // CRUD: READ - ambil daftar barang untuk ditampilkan di tabel
 $query = "SELECT * FROM barang ORDER BY id DESC";
 $result = $koneksi->query($query);
+
+// Ambil nama user yang login untuk sapaan di header
+$current_username = 'Pengguna';
+if (isset($_SESSION['user_id'])) {
+  $uid = (int)$_SESSION['user_id'];
+  if ($stmtUser = $koneksi->prepare("SELECT username FROM users WHERE id = ?")) {
+    $stmtUser->bind_param("i", $uid);
+    if ($stmtUser->execute()) {
+      $resUser = $stmtUser->get_result();
+      if ($rowU = $resUser->fetch_assoc()) {
+        $current_username = $rowU['username'];
+      }
+    }
+  }
+}
+// Ringkasan stok: total stok (jumlah keseluruhan), jumlah item menipis (<=5), dan item habis (=0)
+$summary = [
+  'total_qty' => 0,
+  'menipis_count' => 0,
+  'habis_count' => 0,
+];
+$sumQuery = "SELECT 
+    COALESCE(SUM(stok),0) AS total_qty,
+    SUM(CASE WHEN stok > 0 AND stok <= 5 THEN 1 ELSE 0 END) AS menipis_count,
+    SUM(CASE WHEN stok = 0 THEN 1 ELSE 0 END) AS habis_count
+  FROM barang";
+if ($sumRes = $koneksi->query($sumQuery)) {
+  if ($rowSum = $sumRes->fetch_assoc()) {
+    $summary['total_qty'] = (int)$rowSum['total_qty'];
+    $summary['menipis_count'] = (int)$rowSum['menipis_count'];
+    $summary['habis_count'] = (int)$rowSum['habis_count'];
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -22,7 +55,8 @@ $result = $koneksi->query($query);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="assets/css/landing.css" rel="stylesheet">
     <link href="assets/css/dashboard.css" rel="stylesheet">
-    <link href="assets/css/splash.css" rel="stylesheet">
+    <link href="assets/css/loading-bar.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="icon" type="image/png" href="assets/media/fav-icon.png">
     <link rel="shortcut icon" href="assets/media/fav-icon.png">
     <link rel="apple-touch-icon" href="assets/media/fav-icon.png">
@@ -30,77 +64,219 @@ $result = $koneksi->query($query);
     <meta name="theme-color" content="#28a745">
 </head>
 <body>
-    <div id="splash" class="splash-overlay">
-      <div class="splash-content">
-        <img class="splash-logo" src="assets/media/logistify.png" alt="Logo Logistify">
-        <div class="splash-title">Logistify</div>
-      </div>
-    </div>
-    <div class="loader-wrapper" style="display:none">
-        <img src="assets/media/fav-icon.png" alt="Loading..." class="loader-logo">
-        <div class="loader-text">Logistify</div>
-        <div class="progress-container">
-          <div class="progress-percent">0%</div>
-          <div class="progress-track">
-            <div class="progress-bar"></div>
-          </div>
+    <div id="loadingBarOverlay" class="loading-overlay" style="display:none">
+      <div class="loading-box">
+        <div class="loading-head">
+          <img src="assets/media/logistify.png" alt="Logo Logistify" class="loading-logo">
+          <div class="loading-title">Memuat Dashboard</div>
         </div>
-    </div>
-    <div class="brand-bar">
-      <div class="logo-dummy"><img src="assets/media/logistify.png" alt="Logo Logistify"></div>
-      <div class="site-title">Logistify</div>
+        <div class="loading-track"><div class="loading-bar"></div></div>
+        <div class="loading-percent">0%</div>
+      </div>
     </div>
     <div class="container mt-3">
-      <div class="dashboard-container">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h2 class="m-0">Data Barang 📦</h2>
-        <div class="d-flex gap-2">
-          <a href="index.php" id="homeBtn" class="btn btn-outline-light"><i class="bi bi-house"></i> Halaman Utama</a>
-          <a href="logout.php" id="logoutBtn" class="btn btn-danger">Logout</a>
+      <div class="app-shell">
+        <aside class="sidebar">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="logo-dummy"><img src="assets/media/logistify.png" alt="Logo Logistify"></div>
+            <div class="site-title">Logistify</div>
+          </div>
+          <nav class="nav flex-column">
+            <a class="nav-link active" href="#" data-section="dashboardHome">Dashboard</a>
+            <a class="nav-link" href="data_form.php"><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
+            <a class="nav-link" href="data_barang.php">Data Barang</a>
+            <a class="nav-link" href="#" onclick="return false;">Barang Masuk</a>
+            <a class="nav-link" href="#" onclick="return false;">Barang Keluar</a>
+            <a class="nav-link" href="#" onclick="return false;">Supplier</a>
+            <a class="nav-link" href="#" onclick="return false;">Lokasi</a>
+            <a class="nav-link" href="generate_laporan.php" target="_blank">Laporan PDF</a>
+          </nav>
+          <hr>
+          <a href="logout.php" id="logoutBtn" class="btn btn-danger w-100">Logout</a>
+          <a href="index.php" id="homeBtn" class="btn btn-outline-light w-100 mt-2"><i class="bi bi-house"></i> Halaman Utama</a>
+        </aside>
+        <main>
+          <div class="dashboard-container">
+            <div class="header-bar">
+              <div>
+                <h4 class="m-0">Halo, <?= htmlspecialchars($current_username); ?> 👋 — Selamat datang kembali!</h4>
+                <small>Kelola stok dengan mudah menggunakan Logistify!</small>
+              </div>
+            </div>
+      <!-- Dashboard Home Section -->
+      <div id="section-dashboardHome" class="content-section active">
+      <!-- Ringkasan Stok Barang -->
+      <div class="summary-wrap">
+        <div class="summary-card">
+          <div class="summary-title">Total Stok</div>
+          <div class="summary-value"><?= number_format($summary['total_qty'], 0, ',', '.'); ?></div>
+          <div class="summary-sub">Jumlah keseluruhan kuantitas barang</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-title">Stok Menipis</div>
+          <div class="summary-value"><?= number_format($summary['menipis_count'], 0, ',', '.'); ?></div>
+          <div class="summary-sub">Item dengan stok ≤ 5</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-title">Stok Habis</div>
+          <div class="summary-value"><?= number_format($summary['habis_count'], 0, ',', '.'); ?></div>
+          <div class="summary-sub">Item dengan stok = 0</div>
         </div>
       </div>
-        <div class="dashboard-actions mb-3">
-          <a href="data_form.php" class="btn btn-success"><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
-          <a href="generate_laporan.php" class="btn btn-info" target="_blank"><i class="bi bi-filetype-pdf"></i> Download Laporan (PDF)</a>
+
+      <!-- Bar judul lama dan filter select dihapus sesuai permintaan -->
+        <!-- Aksi PDF dipindah ke sidebar; tombol di area konten dihapus sesuai instruksi -->
+
+      </div> <!-- /#section-dashboardHome -->
+
+        <!-- Data Barang Section -->
+        <div id="section-dataBarang" class="content-section">
+          <!-- Konten Data Barang dihapus sesuai instruksi -->
+        </div>
+        <div class="content-wrap mt-3">
+          <div class="chart-card">
+            <div class="chart-title">Grafik Aktivitas Stok</div>
+            <canvas id="stockChart" height="120"></canvas>
+          </div>
+          <div class="feature-card">
+            <div class="title">Notifikasi Stok Minimum</div>
+            <div class="desc">Peringatan akan muncul otomatis saat item menipis/habis.</div>
+            <button class="btn btn-success btn-sm mt-2" id="btnSimulateNotif">Simulasikan Notifikasi</button>
+          </div>
         </div>
 
-        <table class="table table-bordered table-striped table-dashboard">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Nama Barang</th>
-                    <th>Stok</th>
-                    <th>Foto</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="data-table">
-                <?php $no = 1; while($row = $result->fetch_assoc()): ?>
-                <tr>
-                    <td><?= $no++; ?></td>
-                    <td><?= htmlspecialchars($row['nama_barang']); ?></td>
-                    <td><?= $row['stok']; ?></td>
-                    <td>
-                        <?php if ($row['foto_barang']): ?>
- <img src="uplouds/<?= $row['foto_barang']; ?>" class="thumb">
-                        <?php else: ?>
-                            Tidak ada foto
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <a href="data_form.php?id=<?= $row['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
-                        <!-- Tombol hapus menggunakan AJAX (lihat assets/js/custom.js) -->
-                        <button class="btn btn-danger btn-sm delete-btn" data-id="<?= $row['id']; ?>">Hapus (AJAX)</button>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+        <!-- Kartu fitur dalam pengembangan: Riwayat, Barang Masuk/Keluar, Manajemen Supplier/Lokasi, Notifikasi Minimum -->
+        <div class="feature-grid mt-3">
+          <div class="feature-card">
+            <div class="title">Riwayat Pergerakan Stok</div>
+            <div class="desc">Fitur ini sedang dalam tahap penyempurnaan dan akan diaktifkan pada versi berikutnya.</div>
+          </div>
+          <div class="feature-card">
+            <div class="title">Barang Masuk</div>
+            <div class="desc">Form AJAX untuk menambah stok akan tersedia segera.</div>
+            <button class="btn btn-success btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#modalMasuk">Input Barang Masuk</button>
+          </div>
+          <div class="feature-card">
+            <div class="title">Barang Keluar</div>
+            <div class="desc">Form AJAX untuk pengurangan stok akan tersedia segera.</div>
+            <button class="btn btn-success btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#modalKeluar">Input Barang Keluar</button>
+          </div>
+          <div class="feature-card">
+            <div class="title">Manajemen Supplier</div>
+            <div class="desc">Simpan data pemasok dan kaitkan dengan barang (in dev).</div>
+          </div>
+          <div class="feature-card">
+            <div class="title">Manajemen Lokasi</div>
+            <div class="desc">Atur gudang/rak lokasi penyimpanan (in dev).</div>
+          </div>
+          <div class="feature-card">
+            <div class="title">Notifikasi Stok Minimum</div>
+            <div class="desc">Peringatan otomatis akan muncul jika stok mendekati batas minimum.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Barang Masuk -->
+    <div class="modal fade" id="modalMasuk" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-success">
+          <div class="modal-header">
+            <h5 class="modal-title">Input Barang Masuk</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="formMasuk">
+              <div class="mb-2">
+                <label class="form-label">Nama Barang</label>
+                <input type="text" class="form-control" placeholder="Nama Barang" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Jumlah</label>
+                <input type="number" class="form-control" placeholder="0" min="1" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Keterangan</label>
+                <input type="text" class="form-control" placeholder="Catatan (opsional)">
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button class="btn btn-success" id="btnSubmitMasuk">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Modal Barang Keluar -->
+    <div class="modal fade" id="modalKeluar" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-success">
+          <div class="modal-header">
+            <h5 class="modal-title">Input Barang Keluar</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="formKeluar">
+              <div class="mb-2">
+                <label class="form-label">Nama Barang</label>
+                <input type="text" class="form-control" placeholder="Nama Barang" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Jumlah</label>
+                <input type="number" class="form-control" placeholder="0" min="1" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Keterangan</label>
+                <input type="text" class="form-control" placeholder="Catatan (opsional)">
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button class="btn btn-success" id="btnSubmitKeluar">Simpan</button>
+          </div>
+        </div>
       </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="assets/js/custom.js"></script>
+    <script src="assets/js/dashboard-ui.js"></script>
+    <script>
+      // Toggle sections via sidebar nav
+      document.addEventListener('DOMContentLoaded', function(){
+        const links = document.querySelectorAll('.sidebar .nav-link[data-section]');
+        const sections = {
+          dashboardHome: document.getElementById('section-dashboardHome'),
+          dataBarang: document.getElementById('section-dataBarang')
+        };
+        function show(sec){
+          Object.keys(sections).forEach(function(key){
+            const el = sections[key];
+            if (!el) return;
+            el.classList.toggle('active', key === sec);
+          });
+          links.forEach(function(link){
+            link.classList.toggle('active', link.getAttribute('data-section') === sec);
+          });
+          // When switching to Data Barang, focus search and trigger filter
+          if (sec === 'dataBarang') {
+            const input = document.getElementById('searchInput');
+            if (input) { input.focus(); }
+            if (window.logiFilterTable) window.logiFilterTable();
+          }
+        }
+        links.forEach(function(link){
+          link.addEventListener('click', function(e){
+            const sec = link.getAttribute('data-section');
+            if (sec){ e.preventDefault(); show(sec); }
+          });
+        });
+        // Default to dashboard
+        show('dashboardHome');
+      });
+    </script>
     <script>
       // Loader setelah login menuju dashboard (0–100% dengan logo)
       (function() {
@@ -108,12 +284,13 @@ $result = $koneksi->query($query);
         const loader = document.querySelector('.loader-wrapper');
         const percentEl = document.querySelector('.progress-percent');
         const barEl = document.querySelector('.progress-bar');
+        if (!loader || !percentEl || !barEl) return; // loader tidak digunakan lagi
         function runProgress(onDone) {
           let p = 0;
           percentEl.textContent = '0%';
           barEl.style.width = '0%';
           const step = setInterval(() => {
-            p = Math.min(100, p + Math.floor(Math.random() * 10) + 3); // 3–12%
+            p = Math.min(100, p + Math.floor(Math.random() * 10) + 3);
             percentEl.textContent = p + '%';
             barEl.style.width = p + '%';
             if (p >= 100) { clearInterval(step); if (typeof onDone === 'function') onDone(); }
@@ -154,8 +331,6 @@ $result = $koneksi->query($query);
           showMsg('Berhasil', 'Data berhasil ditambahkan.', 'success');
         } else if (status === 'edit_sukses') {
           showMsg('Berhasil', 'Data berhasil diperbarui.', 'success');
-        } else if (status === 'login_sukses') {
-          showMsg('Selamat!', 'Kamu berhasil login.', 'success');
         }
       });
     </script>
@@ -204,6 +379,48 @@ $result = $koneksi->query($query);
         }
       });
     </script>
-    <script src="assets/js/splash.js"></script>
+    <script>
+      // Grafik aktivitas stok (placeholder) dan handler modal masuk/keluar
+      document.addEventListener('DOMContentLoaded', function(){
+        var ctx = document.getElementById('stockChart');
+        if (ctx && typeof Chart !== 'undefined') {
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Apr','May','Jun','Jul','Aug','Sep'],
+              datasets: [
+                { label: 'Masuk', data: [5,8,6,10,7,9], backgroundColor: 'rgba(40,167,69,0.65)' },
+                { label: 'Keluar', data: [3,6,4,7,6,8], backgroundColor: 'rgba(40,167,69,0.25)' }
+              ]
+            },
+            options: { responsive: true, plugins: { legend: { labels: { color: '#d5f5df' } } }, scales: { x: { ticks: { color: '#d5f5df' } }, y: { ticks: { color: '#d5f5df' } } } }
+          });
+        }
+
+        var btnNotif = document.getElementById('btnSimulateNotif');
+        if (btnNotif) {
+          btnNotif.addEventListener('click', function(){
+            Swal.fire({
+              title:'Peringatan Stok!',
+              text:'Beberapa barang mendekati batas minimum. Periksa dan tambah stok.',
+              icon:'warning',
+              confirmButtonText:'OK',
+              customClass:{ confirmButton:'btn btn-success' },
+              buttonsStyling:false
+            });
+          });
+        }
+
+        var btnMasuk = document.getElementById('btnSubmitMasuk');
+        if (btnMasuk) btnMasuk.addEventListener('click', function(){
+          Swal.fire({ title:'Barang Masuk', text:'Fitur ini sedang dalam tahap penyempurnaan dan akan diaktifkan pada versi berikutnya.', icon:'info', confirmButtonText:'OK', customClass:{confirmButton:'btn btn-success'}, buttonsStyling:false });
+        });
+        var btnKeluar = document.getElementById('btnSubmitKeluar');
+        if (btnKeluar) btnKeluar.addEventListener('click', function(){
+          Swal.fire({ title:'Barang Keluar', text:'Fitur ini sedang dalam tahap penyempurnaan dan akan diaktifkan pada versi berikutnya.', icon:'info', confirmButtonText:'OK', customClass:{confirmButton:'btn btn-success'}, buttonsStyling:false });
+        });
+      });
+    </script>
+    <script src="assets/js/loading-bar.js"></script>
   </body>
 </html>
