@@ -85,15 +85,17 @@ if ($sumRes = $koneksi->query($sumQuery)) {
             <div class="logo-dummy"><img src="assets/media/logistify.png" alt="Logo Logistify"></div>
             <div class="site-title">Logistify</div>
           </div>
+          <!-- Sidebar navigation -->
           <nav class="nav flex-column">
-            <a class="nav-link active" href="#" data-section="dashboardHome">Dashboard</a>
-    <a class="nav-link" href="data_form.php" data-bs-toggle="tooltip" title="Daftarkan item baru ke master Data Barang."><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
-            <a class="nav-link" href="data_barang.php">Data Barang</a>
-    <a class="nav-link" href="barang_masuk.php" data-bs-toggle="tooltip" title="Catat penambahan stok untuk barang yang sudah ada.">Barang Masuk</a>
-            <a class="nav-link" href="barang_keluar.php" data-bs-toggle="tooltip" title="Catat pengurangan stok untuk barang yang sudah ada.">Barang Keluar</a>
-            <a class="nav-link" href="supplier.php" data-bs-toggle="tooltip" title="Kelola daftar pemasok barang.">Supplier</a>
-            <a class="nav-link" href="lokasi.php" data-bs-toggle="tooltip" title="Kelola lokasi penyimpanan gudang.">Lokasi</a>
-            <a class="nav-link" href="generate_laporan.php" target="_blank">Laporan PDF</a>
+              <a class="nav-link active" href="#" data-section="dashboardHome">Dashboard</a>
+              <a class="nav-link" href="data_form.php" data-bs-toggle="tooltip" title="Daftarkan item baru ke master Data Barang."><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
+              <a class="nav-link" href="data_barang.php" data-bs-toggle="tooltip" title="Total Stok Barang">Data Barang</a>
+              <a class="nav-link" href="barang_masuk.php" data-bs-toggle="tooltip" title="Catat penambahan stok untuk barang yang sudah ada.">Barang Masuk</a>
+              <a class="nav-link" href="barang_keluar.php" data-bs-toggle="tooltip" title="Catat pengurangan stok untuk barang yang sudah ada.">Barang Keluar</a>
+              <a class="nav-link" href="supplier.php" data-bs-toggle="tooltip" title="Kelola daftar pemasok barang.">Supplier</a>
+              <a class="nav-link" href="lokasi.php" data-bs-toggle="tooltip" title="Kelola lokasi penyimpanan gudang.">Lokasi</a>
+              <!-- Ubah tautan laporan agar memicu modal -->
+              <a class="nav-link" href="#" id="linkLaporanPdf" data-bs-toggle="tooltip" title="Unduh Laporan PDF">Laporan PDF</a>
           </nav>
           <hr>
           <a href="logout.php" id="logoutBtn" class="btn btn-danger w-100">Logout</a>
@@ -140,42 +142,27 @@ if ($sumRes = $koneksi->query($sumQuery)) {
         <div class="content-wrap mt-3">
           <div class="chart-card">
             <div class="chart-title">Grafik Aktivitas Stok</div>
-            <canvas id="stockChart" height="120"></canvas>
+            <div class="chart-canvas-wrap">
+              <canvas id="stockChart"></canvas>
+            </div>
           </div>
-          <div class="feature-card">
-            <div class="title">Notifikasi Stok Minimum</div>
-            <div class="desc">Peringatan akan muncul otomatis saat item menipis/habis.</div>
-            <button class="btn btn-success btn-sm mt-2" id="btnSimulateNotif">Simulasikan Notifikasi</button>
+          <!-- Grafik Stok Minimum (tetap) -->
+          <div class="chart-card chart-narrow">
+            <div class="chart-title">Grafik Stok Minimum</div>
+            <div class="chart-canvas-wrap">
+              <canvas id="minStockChart" style="height: 240px;"></canvas>
+            </div>
           </div>
         </div>
 
         <!-- Kartu fitur dalam pengembangan: Riwayat, Barang Masuk/Keluar, Manajemen Supplier/Lokasi, Notifikasi Minimum -->
-        <div class="feature-grid mt-3">
-          <div class="feature-card">
-            <div class="title">Riwayat Pergerakan Stok</div>
-            <div class="desc">Fitur ini sedang dalam tahap penyempurnaan dan akan diaktifkan pada versi berikutnya.</div>
-          </div>
-          <div class="feature-card">
-            <div class="title">Barang Masuk</div>
-            <div class="desc">Form AJAX untuk menambah stok akan tersedia segera.</div>
-            <button class="btn btn-success btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#modalMasuk">Input Barang Masuk</button>
-          </div>
-          <div class="feature-card">
-            <div class="title">Barang Keluar</div>
-            <div class="desc">Form AJAX untuk pengurangan stok akan tersedia segera.</div>
-            <button class="btn btn-success btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#modalKeluar">Input Barang Keluar</button>
-          </div>
-          <div class="feature-card">
-            <div class="title">Manajemen Supplier</div>
-            <div class="desc">Simpan data pemasok dan kaitkan dengan barang (in dev).</div>
-          </div>
-          <div class="feature-card">
-            <div class="title">Manajemen Lokasi</div>
-            <div class="desc">Atur gudang/rak lokasi penyimpanan (in dev).</div>
-          </div>
-          <div class="feature-card">
-            <div class="title">Notifikasi Stok Minimum</div>
-            <div class="desc">Peringatan otomatis akan muncul jika stok mendekati batas minimum.</div>
+        <!-- Ganti blok feature-grid (6 card) menjadi satu grafik Barang Keluar Terbanyak -->
+        <div class="mt-3">
+          <div class="chart-card">
+            <div class="chart-title">Grafik Barang Keluar Terbanyak</div>
+            <div class="chart-canvas-wrap">
+              <canvas id="topKeluarChart" style="height: 280px;"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -412,19 +399,13 @@ if ($sumRes = $koneksi->query($sumQuery)) {
       document.addEventListener('DOMContentLoaded', function(){
         var ctx = document.getElementById('stockChart');
         if (ctx && typeof Chart !== 'undefined') {
-          new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: ['Apr','May','Jun','Jul','Aug','Sep'],
-              datasets: [
-                { label: 'Masuk', data: [5,8,6,10,7,9], backgroundColor: 'rgba(40,167,69,0.65)' },
-                { label: 'Keluar', data: [3,6,4,7,6,8], backgroundColor: 'rgba(40,167,69,0.25)' }
-              ]
-            },
-            options: { responsive: true, plugins: { legend: { labels: { color: '#d5f5df' } } }, scales: { x: { ticks: { color: '#d5f5df' } }, y: { ticks: { color: '#d5f5df' } } } }
-          });
+          // Data dinamis Jan–Des
+          if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
+          // Stok minimum top-5
+          if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
+          // Barang keluar terbanyak (top-5, tahun berjalan)
+          if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
         }
-
         var btnNotif = document.getElementById('btnSimulateNotif');
         if (btnNotif) {
           btnNotif.addEventListener('click', function(){
@@ -459,3 +440,109 @@ if ($sumRes = $koneksi->query($sumQuery)) {
     </script>
 </body>
 </html>
+
+<!-- Modal Pilihan Laporan PDF -->
+<div class="modal fade" id="modalLaporanPdf" tabindex="-1" aria-labelledby="modalLaporanPdfLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalLaporanPdfLabel">Unduh Laporan PDF</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label text-success">Pilih jenis laporan:</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="reportType" id="reportStok" value="stok" checked>
+              <label class="form-check-label text-success" for="reportStok">Laporan Data Barang</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="reportType" id="reportMasuk" value="masuk">
+              <label class="form-check-label text-success" for="reportMasuk">Laporan Barang Masuk</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="reportType" id="reportKeluar" value="keluar">
+              <label class="form-check-label text-success" for="reportKeluar">Laporan Barang Keluar</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-success" for="laporanYear">Tahun:</label>
+          <select class="form-select" id="laporanYear">
+            <?php
+              $currentYear = (int)date('Y');
+              for ($y = $currentYear; $y >= $currentYear - 10; $y--) {
+                echo '<option value="'.$y.'"'.($y===$currentYear?' selected':'').'>'.$y.'</option>';
+              }
+            ?>
+          </select>
+          <small class="text-muted d-block mt-1">Untuk “Data Barang”, tahun tidak digunakan (menampilkan stok saat ini).</small>
+        </div>
+
+        <div class="p-3 border rounded">
+          <div class="fw-bold text-success" id="previewTitle">LOGISTIFY - LAPORAN DATA BARANG</div>
+          <div class="text-success" id="previewSub">Tanggal Cetak: <?= date('d'); ?> <?= date('F'); ?> <?= date('Y'); ?></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button class="btn btn-success" id="btnDownloadLaporan"><i class="bi bi-file-earmark-pdf"></i> Unduh</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Inisialisasi modal & aksi unduh laporan
+  document.addEventListener('DOMContentLoaded', function(){
+    var link = document.getElementById('linkLaporanPdf');
+    var modalEl = document.getElementById('modalLaporanPdf');
+    if (!link || !modalEl) return;
+
+    var modal = new bootstrap.Modal(modalEl);
+    link.addEventListener('click', function(e){
+      e.preventDefault();
+      modal.show();
+    });
+
+    var btnDownload = document.getElementById('btnDownloadLaporan');
+    var yearSelect = document.getElementById('laporanYear');
+    var radios = document.querySelectorAll('input[name="reportType"]');
+    var previewTitle = document.getElementById('previewTitle');
+    var previewSub = document.getElementById('previewSub');
+
+    function updatePreview(){
+      var type = document.querySelector('input[name="reportType"]:checked').value;
+      var year = yearSelect.value;
+      var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+      var now = new Date();
+      if (type === 'stok'){
+        previewTitle.textContent = 'LOGISTIFY - LAPORAN DATA BARANG';
+        previewSub.textContent = 'Tanggal Cetak: ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+        yearSelect.disabled = true;
+      } else if (type === 'masuk'){
+        previewTitle.textContent = 'LOGISTIFY - LAPORAN BARANG MASUK';
+        previewSub.textContent = 'Periode: Januari - Desember ' + year;
+        yearSelect.disabled = false;
+      } else {
+        previewTitle.textContent = 'LOGISTIFY - LAPORAN BARANG KELUAR';
+        previewSub.textContent = 'Periode: Januari - Desember ' + year;
+        yearSelect.disabled = false;
+      }
+    }
+
+    radios.forEach(function(r){ r.addEventListener('change', updatePreview); });
+    yearSelect.addEventListener('change', updatePreview);
+    updatePreview();
+
+    btnDownload.addEventListener('click', function(){
+      var type = document.querySelector('input[name="reportType"]:checked').value;
+      var year = yearSelect.value;
+      var url = 'generate_laporan.php?report=' + encodeURIComponent(type) + '&year=' + encodeURIComponent(year);
+      window.open(url, '_blank');
+      modal.hide();
+    });
+  });
+</script>

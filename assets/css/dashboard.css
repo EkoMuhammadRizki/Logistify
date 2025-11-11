@@ -257,3 +257,25 @@ body {
   .btn.btn-success,
   .btn.btn-outline-light { transition: none; }
 }
+
+/* Atur kotak grafik agar rounded dan tidak overflow */
+.chart-canvas-wrap {
+  height: 260px;
+}
+#stockChart {
+  height: 100% !important;
+  width: 100% !important;
+}
+.chart-card {
+  display: block;
+  width: 100% !important;
+  height: 260px !important;
+  max-height: 320px !important;
+}
+.chart-card.chart-narrow {
+  max-width: 420px; /* sesuaikan agar tidak terlalu lebar */
+  width: 100%;
+}
+.chart-card.chart-narrow .chart-canvas-wrap {
+  width: 100%;
+}

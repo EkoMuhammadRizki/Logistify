@@ -33,6 +33,10 @@ $(document).ready(function() {
                         }
                         // Refresh grafik aktivitas stok bila ada
                         if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
+                        // Refresh grafik stok minimum bila ada
+                        if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
+                        // Refresh grafik barang keluar terbanyak bila ada
+                        if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
                         // Tidak reload halaman; tabel dapat diperbarui manual jika diperlukan
                     });
                 } else {
@@ -118,16 +122,21 @@ $(document).ready(function() {
             if (!result.isConfirmed) return;
             $.ajax({
                 url: 'proses_masuk.php?action=delete', type:'POST', data:{ id:id }, dataType:'json',
-                success:function(resp){
-                    if (resp.status === 'success'){
-                        Swal.fire({ title:'Berhasil', text: resp.message, icon:'success', confirmButtonText:'OK', customClass:{ confirmButton:'btn btn-success' }, buttonsStyling:false })
-                        .then(function(){ $('tr[data-id="'+id+'"]').fadeOut(300, function(){ $(this).remove(); }); if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); } });
+                success: function(response) {
+                    if (response.status === 'success') {
+                        Swal.fire({ title: 'Berhasil', text: response.message, icon: 'success', confirmButtonText: 'OK', customClass: { confirmButton: 'btn btn-success' }, buttonsStyling: false });
                     } else {
-                        Swal.fire({ title:'Gagal', text: resp.message, icon:'error', confirmButtonText:'OK', customClass:{ confirmButton:'btn btn-danger' }, buttonsStyling:false });
+                        Swal.fire({ title: 'Gagal', text: response.message, icon: 'error', confirmButtonText: 'OK', customClass: { confirmButton: 'btn btn-danger' }, buttonsStyling: false });
                     }
                 },
-                error:function(){ Swal.fire({ title:'Error', text:'Terjadi kesalahan komunikasi dengan server.', icon:'error', confirmButtonText:'OK', customClass:{ confirmButton:'btn btn-danger' }, buttonsStyling:false }); }
+                error: function() {
+                    Swal.fire({ title: 'Error', text: 'Terjadi kesalahan komunikasi dengan server.', icon: 'error', confirmButtonText: 'OK', customClass: { confirmButton: 'btn btn-danger' }, buttonsStyling: false });
+                }
             });
+            $('tr[data-id="'+id+'"]').fadeOut(300, function(){ $(this).remove(); });
+            if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
+            if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
+            if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
         });
     });
 });

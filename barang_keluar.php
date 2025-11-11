@@ -176,19 +176,46 @@ if ($exists) {
       $('#btnSubmitKeluar').on('click', function(){
         var form = document.getElementById('formKeluar'); if (!form) return;
         var fd = new FormData(form); fd.append('action','create');
-        $.ajax({ url:'proses_keluar.php', type:'POST', data:fd, contentType:false, processData:false, dataType:'json', success:function(resp){
-          if (resp.status==='success') { Swal.fire({ title:'Berhasil', text:resp.message, icon:'success' }); form.reset(); if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); } }
-          else { Swal.fire({ title:'Gagal', text:resp.message, icon:'error' }); }
-        }, error:function(){ Swal.fire({ title:'Error', text:'Terjadi kesalahan komunikasi dengan server.', icon:'error' }); }});
+        $.ajax({
+          url:'proses_keluar.php',
+          type:'POST',
+          data:fd,
+          contentType:false,
+          processData:false,
+          dataType:'json',
+          success:function(resp){
+            if (resp.status==='success') {
+              Swal.fire({ title:'Berhasil', text:resp.message, icon:'success' });
+              form.reset();
+              if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
+              if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
+              if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
+            } else { Swal.fire({ title:'Gagal', text:resp.message, icon:'error' }); }
+          },
+          error:function(){ Swal.fire({ title:'Error', text:'Terjadi kesalahan komunikasi dengan server.', icon:'error' }); }
+        });
       });
       $(document).on('click', '.delete-keluar', function(){
         var id = $(this).closest('tr').data('id');
         Swal.fire({ title:'Hapus transaksi?', icon:'warning', showCancelButton:true }).then(function(r){
           if (!r.isConfirmed) return;
-          $.ajax({ url:'proses_keluar.php?action=delete', type:'POST', data:{ id:id }, dataType:'json', success:function(resp){
-            if (resp.status==='success'){ Swal.fire({ title:'Berhasil', text:resp.message, icon:'success' }).then(function(){ $('tr[data-id="'+id+'"]').remove(); if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); } }); }
-            else { Swal.fire({ title:'Gagal', text:resp.message, icon:'error' }); }
-          }, error:function(){ Swal.fire({ title:'Error', text:'Kesalahan komunikasi.', icon:'error' }); }});
+          $.ajax({
+            url:'proses_keluar.php?action=delete',
+            type:'POST',
+            data:{ id:id },
+            dataType:'json',
+            success:function(resp){
+              if (resp.status==='success'){
+                Swal.fire({ title:'Berhasil', text:resp.message, icon:'success' }).then(function(){
+                  $('tr[data-id="'+id+'"]').remove();
+                  if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
+                  if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
+                  if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
+                });
+              } else { Swal.fire({ title:'Gagal', text:resp.message, icon:'error' }); }
+            },
+            error:function(){ Swal.fire({ title:'Error', text:'Kesalahan komunikasi.', icon:'error' }); }
+          });
         });
       });
     });
