@@ -81,7 +81,7 @@ if ($exists) {
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="m-0">Barang Masuk</h2>
         <div class="d-flex align-items-center gap-2">
-          <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Kembali</a>
+          <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-grid"></i> Dashboard</a>
           <a href="generate_laporan.php" target="_blank" class="btn btn-success"><i class="bi bi-file-earmark-pdf"></i> Laporan PDF</a>
         </div>
       </div>

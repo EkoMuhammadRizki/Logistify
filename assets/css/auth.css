@@ -109,3 +109,8 @@ input[type="password"]::-webkit-textfield-decoration-container { display: none; 
   margin-bottom: 14px;
   font-size: 14px;
 }
+
+/* Helper text under inputs: lighter for better contrast on dark background */
+.form-text {
+  color: #cbd5e1 !important;
+}

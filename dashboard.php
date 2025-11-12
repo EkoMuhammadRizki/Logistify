@@ -78,6 +78,7 @@ if ($sumRes = $koneksi->query($sumQuery)) {
         <div class="loading-percent">0%</div>
       </div>
     </div>
+    <!-- Dashboard utama: ringkasan stok + tiga grafik Chart.js (Aktivitas, Stok Minimum, Keluar Terbanyak) -->
     <div class="container mt-3">
       <div class="app-shell">
         <aside class="sidebar">
@@ -112,20 +113,24 @@ if ($sumRes = $koneksi->query($sumQuery)) {
       <!-- Dashboard Home Section -->
       <div id="section-dashboardHome" class="content-section active">
       <!-- Ringkasan Stok Barang -->
+      <!-- Ringkasan Stok (auto-refresh via stats_summary.php + dashboard-ui.js) -->
       <div class="summary-wrap">
+        <!-- Total kuantitas stok seluruh barang -->
         <div class="summary-card">
           <div class="summary-title">Total Stok</div>
-          <div class="summary-value"><?= number_format($summary['total_qty'], 0, ',', '.'); ?></div>
+          <div class="summary-value" id="summaryTotalQty"><?= number_format($summary['total_qty'], 0, ',', '.'); ?></div>
           <div class="summary-sub">Jumlah keseluruhan kuantitas barang</div>
         </div>
+        <!-- Jumlah item dengan stok ≤ 5 (menipis) -->
         <div class="summary-card">
           <div class="summary-title">Stok Menipis</div>
-          <div class="summary-value"><?= number_format($summary['menipis_count'], 0, ',', '.'); ?></div>
+          <div class="summary-value" id="summaryMenipisCount"><?= number_format($summary['menipis_count'], 0, ',', '.'); ?></div>
           <div class="summary-sub">Item dengan stok ≤ 5</div>
         </div>
+        <!-- Jumlah item dengan stok = 0 (habis). Notifikasi SweetAlert muncul satu kali per sesi atau saat bertambah -->
         <div class="summary-card">
           <div class="summary-title">Stok Habis</div>
-          <div class="summary-value"><?= number_format($summary['habis_count'], 0, ',', '.'); ?></div>
+          <div class="summary-value" id="summaryHabisCount"><?= number_format($summary['habis_count'], 0, ',', '.'); ?></div>
           <div class="summary-sub">Item dengan stok = 0</div>
         </div>
       </div>
@@ -139,8 +144,10 @@ if ($sumRes = $koneksi->query($sumQuery)) {
         <div id="section-dataBarang" class="content-section">
           <!-- Konten Data Barang dihapus sesuai instruksi -->
         </div>
+        <!-- Area grafik: kiri Aktivitas Stok; kanan Stok Minimum -->
         <div class="content-wrap mt-3">
           <div class="chart-card">
+            <!-- Grafik Aktivitas Stok: sumber data stats_aktivitas.php; refresh otomatis saat transaksi -->
             <div class="chart-title">Grafik Aktivitas Stok</div>
             <div class="chart-canvas-wrap">
               <canvas id="stockChart"></canvas>
@@ -148,6 +155,7 @@ if ($sumRes = $koneksi->query($sumQuery)) {
           </div>
           <!-- Grafik Stok Minimum (tetap) -->
           <div class="chart-card chart-narrow">
+            <!-- Grafik Stok Minimum (Top-5 stok terendah < 5, exclude soft-deleted jika ada kolom) → stats_min_stok.php -->
             <div class="chart-title">Grafik Stok Minimum</div>
             <div class="chart-canvas-wrap">
               <canvas id="minStockChart" style="height: 240px;"></canvas>
@@ -157,6 +165,7 @@ if ($sumRes = $koneksi->query($sumQuery)) {
 
         <!-- Kartu fitur dalam pengembangan: Riwayat, Barang Masuk/Keluar, Manajemen Supplier/Lokasi, Notifikasi Minimum -->
         <!-- Ganti blok feature-grid (6 card) menjadi satu grafik Barang Keluar Terbanyak -->
+        <!-- Grafik Barang Keluar Terbanyak sepanjang tahun berjalan (Top-5) → stats_keluar_top.php -->
         <div class="mt-3">
           <div class="chart-card">
             <div class="chart-title">Grafik Barang Keluar Terbanyak</div>

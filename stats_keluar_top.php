@@ -1,4 +1,8 @@
 <?php
+// stats_keluar_top.php — Data grafik Barang Keluar Terbanyak (Top-N)
+// Fitur:
+// - Mengagregasi total keluar per barang untuk tahun yang diminta (default: tahun berjalan)
+// - Mengembalikan labels (nama barang) dan values (jumlah keluar) untuk dipakai Chart.js
 require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);

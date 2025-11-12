@@ -30,8 +30,18 @@ require_once 'functions/auth.php';
   </div>
   <div class="landing">
     <div class="video-bg">
-      <video autoplay muted loop playsinline preload="auto">
-        <source src="assets/media/landing.mp4" type="video/mp4">
+      <?php
+        // Fitur: video latar halaman landing
+        // Masalah sebelumnya: URL relatif tanpa port memicu ERR_ABORTED saat server berjalan di :8000
+        // Solusi: bangun URL absolut berbasis origin saat ini (ikut port Apache/DevServer)
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $origin = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $videoUrl = $origin . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
+        if ($videoUrl === $origin) { $videoUrl = $origin; } // root
+        $videoUrl .= '/assets/media/landing.mp4';
+      ?>
+      <video autoplay muted loop playsinline preload="metadata">
+        <source src="<?= htmlspecialchars($videoUrl, ENT_QUOTES) ?>" type="video/mp4">
       </video>
     </div>
     <div class="overlay-dark"></div>

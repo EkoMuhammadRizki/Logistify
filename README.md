@@ -39,6 +39,30 @@ Logistify adalah aplikasi web sederhana untuk mencatat data barang, mengelola st
 - Manifest Web
   - `manifest.webmanifest` untuk metadata aplikasi web (ikon, nama, dan pengaturan display) agar lebih siap dipakai sebagai PWA ringan.
 
+### Grafik & Ringkasan Real-time (Dashboard)
+- Chart.js untuk 3 grafik utama:
+  - Aktivitas Stok per bulan (`stats_aktivitas.php`).
+  - Stok Minimum Top-5 (`stats_min_stok.php`, hanya `stok < 5`, mengecualikan `is_deleted=1` bila tersedia).
+  - Barang Keluar Terbanyak Top-5 per tahun (`stats_keluar_top.php`).
+- Ringkasan stok (Total Qty, Menipis, Habis) via `stats_summary.php` yang di-refresh otomatis oleh `assets/js/dashboard-ui.js`.
+- Refresh lintas-halaman setelah transaksi/hapus:
+  - Halaman lain menetapkan `localStorage.logistify.notifyHabis`; Dashboard mendengarkan event `storage` dan me-refresh ringkasan/grafik.
+- Notifikasi SweetAlert2 “Stok Habis” di Dashboard:
+  - Muncul satu kali per sesi dan saat jumlah habis bertambah; melacak melalui `sessionStorage.logistify.habisCount`.
+
+### Soft Delete Barang & Dampaknya
+- Tombol Hapus di Data Barang kini menjalankan soft delete (`proses_data.php`):
+  - Menandai `is_deleted=1`, mengisi `deleted_at=NOW()`, dan mengatur `stok=0`.
+  - File foto tidak dihapus; tetap aman untuk audit/restore.
+- `stats_summary.php` menghitung `habis_count` dari `stok=0` sehingga soft delete mempengaruhi tampilan “Stok Habis”.
+
+### Penyesuaian Tampilan Grafik
+- Kartu grafik diperpanjang (CSS `assets/css/dashboard.css`) agar label tidak keluar dari card.
+- Opsi Chart.js (`dashboard-ui.js`) menambahkan padding bawah dan rotasi label sumbu X agar tetap rapi serta mudah dibaca.
+
+### Perbaikan Video Landing
+- Sumber video di `index.php` dibangun sebagai URL absolut berbasis origin (ikut port) untuk menghindari `ERR_ABORTED` saat development server berjalan di `localhost:8000`.
+
 ## Struktur Proyek (ringkas)
 
 - `config/koneksi.php` — Konfigurasi koneksi database MySQL.
@@ -120,6 +144,8 @@ CREATE TABLE barang (
   - SweetAlert2 dipakai untuk konfirmasi dan pesan sukses/gagal.
   - Loader (loading bar overlay) saat login/masuk dashboard.
   - Splash (intro singkat) di landing untuk pengalaman visual yang lebih halus.
+  - Chart.js untuk grafik; konfigurasi responsif, padding, dan rotasi label ditangani di `assets/js/dashboard-ui.js`.
+  - Ringkasan stok di Dashboard di-refresh via AJAX dan menampilkan notifikasi satu kali per sesi.
 
 ## Catatan Komentar di Kode
 

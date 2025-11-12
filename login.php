@@ -207,4 +207,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     setupToggle('toggleLoginPassword', 'loginPassword');
 })();
 </script>
+<script>
+// Autofill Remember Me (client-side)
+// Fitur: jika pengguna memilih "Ingat Saya", simpan username & password secara lokal
+// Catatan keamanan: kredensial disimpan di localStorage browser pengguna. Jangan aktifkan di perangkat bersama.
+(function(){
+  var KEY = 'logistify.remember';
+  var form = document.querySelector('form');
+  var userInput = document.querySelector('input[name="username"]');
+  var passInput = document.getElementById('loginPassword');
+  var rememberEl = document.getElementById('rememberMe');
+
+  function loadRemember(){
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var data = JSON.parse(raw);
+      if (data && typeof data === 'object'){
+        if (data.username && userInput) userInput.value = data.username;
+        if (data.password && passInput) passInput.value = data.password;
+        if (rememberEl) rememberEl.checked = true;
+      }
+    } catch(e){}
+  }
+
+  function saveRemember(){
+    try {
+      if (!rememberEl) return;
+      if (rememberEl.checked){
+        var payload = {
+          username: (userInput && userInput.value) || '',
+          password: (passInput && passInput.value) || ''
+        };
+        localStorage.setItem(KEY, JSON.stringify(payload));
+      } else {
+        localStorage.removeItem(KEY);
+      }
+    } catch(e){}
+  }
+
+  document.addEventListener('DOMContentLoaded', loadRemember);
+  if (form) {
+    form.addEventListener('submit', function(){ saveRemember(); });
+  }
+  if (rememberEl) {
+    rememberEl.addEventListener('change', function(){ if (!rememberEl.checked) localStorage.removeItem(KEY); });
+  }
+})();
+</script>
 </html>

@@ -37,6 +37,8 @@ $(document).ready(function() {
                         if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
                         // Refresh grafik barang keluar terbanyak bila ada
                         if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
+                        // Refresh ringkasan stok (Total/Menipis/Habis)
+                        if (typeof window.refreshSummaryStats === 'function') { window.refreshSummaryStats(); }
                         // Tidak reload halaman; tabel dapat diperbarui manual jika diperlukan
                     });
                 } else {
@@ -85,6 +87,13 @@ $(document).ready(function() {
                                 $('button[data-id="' + id_data + '"]').closest('tr').fadeOut(500, function() {
                                     $(this).remove();
                                 });
+                                // Setelah penghapusan, refresh ringkasan stok dan grafik terkait bila tersedia
+                                if (typeof window.refreshSummaryStats === 'function') { window.refreshSummaryStats(); }
+                                if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
+                                if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
+                                if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
+                                // Trigger lintas-halaman: beri tahu Dashboard untuk menampilkan notifikasi Stok Habis
+                                try { localStorage.setItem('logistify.notifyHabis', String(Date.now())); } catch(e){}
                             });
                         } else {
                             Swal.fire({
@@ -137,6 +146,7 @@ $(document).ready(function() {
             if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
             if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
             if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
+            if (typeof window.refreshSummaryStats === 'function') { window.refreshSummaryStats(); }
         });
     });
 });

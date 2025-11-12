@@ -85,6 +85,9 @@ function ensure_barang_columns(mysqli $db) {
     if (!isset($cols['supplier'])) { $db->query("ALTER TABLE barang ADD COLUMN supplier VARCHAR(255) DEFAULT NULL"); }
     if (!isset($cols['lokasi'])) { $db->query("ALTER TABLE barang ADD COLUMN lokasi VARCHAR(255) DEFAULT NULL"); }
     if (!isset($cols['dokumen'])) { $db->query("ALTER TABLE barang ADD COLUMN dokumen VARCHAR(255) DEFAULT NULL"); }
+    // Kolom soft-delete
+    if (!isset($cols['is_deleted'])) { $db->query("ALTER TABLE barang ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0"); }
+    if (!isset($cols['deleted_at'])) { $db->query("ALTER TABLE barang ADD COLUMN deleted_at DATETIME DEFAULT NULL"); }
 }
 
 // Cek apakah request datang dari **POST** (untuk Create/Update)
@@ -153,23 +156,14 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_id'])) {
     // Diproses oleh AJAX
     header('Content-Type: application/json');
     $id = $_POST['delete_id'];
-    
-    // Ambil nama file foto lama sebelum dihapus
-    $stmt_file = $koneksi->prepare("SELECT foto_barang FROM barang WHERE id = ?");
-    $stmt_file->bind_param("i", $id);
-    $stmt_file->execute();
-    $result_file = $stmt_file->get_result();
-    $row_file = $result_file->fetch_assoc();
-    
-    if ($row_file && $row_file['foto_barang']) {
-        @unlink(__DIR__ . DIRECTORY_SEPARATOR . 'uplouds' . DIRECTORY_SEPARATOR . $row_file['foto_barang']); // Hapus file fisik
-    }
+    // Soft-delete: jangan hapus baris; tandai sebagai terhapus dan set stok=0
+    // Pastikan kolom soft-delete tersedia
+    ensure_barang_columns($koneksi);
 
-    $stmt = $koneksi->prepare("DELETE FROM barang WHERE id = ?");
+    $stmt = $koneksi->prepare("UPDATE barang SET is_deleted = 1, deleted_at = NOW(), stok = 0 WHERE id = ?");
     $stmt->bind_param("i", $id);
-    
     if ($stmt->execute()) {
-        echo json_encode(['status' => 'success', 'message' => 'Data berhasil dihapus.']);
+        echo json_encode(['status' => 'success', 'message' => 'Data dihapus (soft delete).']);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Gagal menghapus data.']);
     }

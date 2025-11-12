@@ -52,7 +52,7 @@ if ($exists) {
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="m-0">Barang Keluar</h2>
         <div class="d-flex gap-2">
-          <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Kembali</a>
+          <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-grid"></i> Dashboard</a>
           <a href="generate_laporan.php?report=keluar" target="_blank" class="btn btn-success"><i class="bi bi-file-earmark-pdf"></i> Laporan PDF</a>
         </div>
       </div>
@@ -190,6 +190,7 @@ if ($exists) {
               if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
               if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
               if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
+              if (typeof window.refreshSummaryStats === 'function') { window.refreshSummaryStats(); }
             } else { Swal.fire({ title:'Gagal', text:resp.message, icon:'error' }); }
           },
           error:function(){ Swal.fire({ title:'Error', text:'Terjadi kesalahan komunikasi dengan server.', icon:'error' }); }
@@ -211,6 +212,7 @@ if ($exists) {
                   if (typeof window.refreshStockChart === 'function') { window.refreshStockChart(); }
                   if (typeof window.refreshMinStockChart === 'function') { window.refreshMinStockChart(); }
                   if (typeof window.refreshTopKeluarChart === 'function') { window.refreshTopKeluarChart(); }
+                  if (typeof window.refreshSummaryStats === 'function') { window.refreshSummaryStats(); }
                 });
               } else { Swal.fire({ title:'Gagal', text:resp.message, icon:'error' }); }
             },

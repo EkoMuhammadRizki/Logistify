@@ -1,5 +1,9 @@
 <?php
-// stats_aktivitas.php — Data grafik aktivitas stok per bulan (masuk & keluar)
+// stats_aktivitas.php — Data grafik aktivitas stok per bulan
+// Fitur:
+// - Agregasi total Barang Masuk & Keluar per bulan untuk tahun berjalan
+// - Aman terhadap ketiadaan tabel (cek keberadaan tabel terlebih dahulu)
+// - Dipanggil via dashboard-ui.js untuk merender grafik Aktivitas Stok
 require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);

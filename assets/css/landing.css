@@ -237,3 +237,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .typing-caret { animation: none; }
 }
+
+/* Helper text under inputs: lighter but still readable on dark theme */
+.form-text {
+  color: #cbd5e1 !important; /* soft light gray-blue matching theme accents */
+}

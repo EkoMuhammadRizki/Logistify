@@ -72,7 +72,7 @@ if ($rs2 = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables 
       <div class="dashboard-container">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h2 class="m-0"><?= $title; ?></h2>
-          <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Kembali</a>
+          <a href="dashboard.php" class="btn btn-outline-light"><i class="bi bi-grid"></i> Dashboard</a>
         </div>
 
         <!-- Form CRUD (Create/Update) barang via AJAX tanpa reload.
@@ -150,7 +150,7 @@ if ($rs2 = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables 
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Foto Barang (Maks 10MB, JPG/PNG)</label>
+                <label class="form-label">Foto Barang (Opsional Maks 10MB, JPG/PNG)</label>
                 <input type="file" name="foto_barang" class="form-control">
                 <?php if ($is_edit && $data['foto_barang']): ?>
                 <!-- Pratayang foto saat ini untuk mode edit -->
@@ -158,7 +158,7 @@ if ($rs2 = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables 
                 <?php endif; ?>
             </div>
             <div class="mb-3">
-                <label class="form-label">Dokumen Pendukung (opsional, PDF/JPG/PNG)</label>
+                <label class="form-label">Dokumen Pendukung (Opsional, PDF/JPG/PNG)</label>
                 <input type="file" name="dokumen" class="form-control">
             </div>
             

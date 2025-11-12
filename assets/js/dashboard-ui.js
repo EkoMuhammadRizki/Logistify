@@ -84,9 +84,19 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 6, right: 8, bottom: 28, left: 8 } },
         scales: {
           y: { beginAtZero: true, title: { display: true, text: 'Jumlah barang' } },
-          x: { title: { display: true, text: 'Bulan' } }
+          x: {
+            title: { display: true, text: 'Bulan' },
+            ticks: {
+              autoSkip: true,
+              maxRotation: 60,
+              minRotation: 0,
+              padding: 8,
+              font: { size: 12 }
+            }
+          }
         },
         plugins: {
           legend: { labels: { color: '#e9ecef' } },
@@ -208,9 +218,19 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 6, right: 8, bottom: 28, left: 8 } },
         scales: {
           y: { beginAtZero: true, title: { display: true, text: 'Jumlah Keluar' } },
-          x: { title: { display: true, text: 'Barang' } }
+          x: {
+            title: { display: true, text: 'Barang' },
+            ticks: {
+              autoSkip: true,
+              maxRotation: 60,
+              minRotation: 0,
+              padding: 8,
+              font: { size: 12 }
+            }
+          }
         },
         plugins: {
           legend: { labels: { color: '#e9ecef' } },
@@ -242,4 +262,74 @@
   } else { fetchData(); }
 
   window.refreshTopKeluarChart = fetchData;
+})();
+
+// Ringkasan Stok (Total, Menipis, Habis) — auto-refresh via AJAX
+(function(){
+  function formatID(n){ try { return new Intl.NumberFormat('id-ID').format(n || 0); } catch(e){ return (n||0).toString(); } }
+  var lastHabisCount = null;
+  function getStoredHabis(){
+    try {
+      var s = sessionStorage.getItem('logistify.habisCount');
+      if (s === null || s === undefined) return null;
+      var v = parseInt(s, 10);
+      return isNaN(v) ? null : v;
+    } catch(e){ return null; }
+  }
+  function setStoredHabis(n){
+    try { sessionStorage.setItem('logistify.habisCount', String(n || 0)); } catch(e){}
+  }
+
+  function render(data){
+    var elTotal = document.getElementById('summaryTotalQty');
+    var elMenipis = document.getElementById('summaryMenipisCount');
+    var elHabis = document.getElementById('summaryHabisCount');
+    if (elTotal) { elTotal.textContent = formatID(data.total_qty || 0); }
+    if (elMenipis) { elMenipis.textContent = formatID(data.menipis_count || 0); }
+    var currentHabis = data.habis_count || 0;
+    if (elHabis) { elHabis.textContent = formatID(currentHabis); }
+    // Tampilkan notifikasi di Dashboard satu kali per sesi, dan saat jumlah bertambah
+    try {
+      if (typeof Swal !== 'undefined') {
+        var prevStored = getStoredHabis();
+        var shouldNotify = currentHabis > 0 && (prevStored === null || currentHabis > prevStored);
+        if (shouldNotify) {
+          Swal.fire({
+            title: 'Notifikasi Stok Habis',
+            text: 'Stok Habis sekarang: ' + formatID(currentHabis),
+            icon: 'warning',
+            confirmButtonText: 'Mengerti',
+            customClass: { confirmButton: 'btn btn-success' },
+            buttonsStyling: false
+          });
+        }
+        setStoredHabis(currentHabis);
+      }
+    } catch(e){}
+    lastHabisCount = currentHabis;
+  }
+
+  function fetchSummary(){
+    fetch('stats_summary.php')
+      .then(function(res){ return res.json(); })
+      .then(function(json){ if (json && json.status === 'success') { render(json); } })
+      .catch(function(){ /* diamkan bila gagal */ });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fetchSummary);
+  } else { fetchSummary(); }
+
+  // Ekspor untuk dipanggil setelah transaksi masuk/keluar
+  window.refreshSummaryStats = fetchSummary;
+  // Dengarkan perubahan localStorage dari halaman lain (mis. Data Barang)
+  // Ketika tombol Hapus diklik, halaman tersebut meng-set key 'logistify.notifyHabis'.
+  // Dashboard yang terbuka akan menangkap event ini, lalu me-refresh ringkasan & notifikasi.
+  window.addEventListener('storage', function(ev){
+    try {
+      if (ev && ev.key === 'logistify.notifyHabis') {
+        fetchSummary();
+      }
+    } catch(e){}
+  });
 })();
