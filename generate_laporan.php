@@ -7,6 +7,18 @@ require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);
 
+$chk = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang' AND column_name = 'user_id'");
+$chk->execute(); $cr = 0; $rs = $chk->get_result(); if ($rs && ($rw = $rs->fetch_assoc())) { $cr = (int)$rw['c']; }
+if ($cr === 0) { $koneksi->query("ALTER TABLE `barang` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang` ADD INDEX `idx_user` (`user_id`)"); }
+
+$chk2 = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_masuk' AND column_name = 'user_id'");
+$chk2->execute(); $cr2 = 0; $rs2 = $chk2->get_result(); if ($rs2 && ($rw2 = $rs2->fetch_assoc())) { $cr2 = (int)$rw2['c']; }
+if ($cr2 === 0) { $koneksi->query("ALTER TABLE `barang_masuk` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang_masuk` ADD INDEX `idx_user` (`user_id`)"); }
+
+$chk3 = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_keluar' AND column_name = 'user_id'");
+$chk3->execute(); $cr3 = 0; $rs3 = $chk3->get_result(); if ($rs3 && ($rw3 = $rs3->fetch_assoc())) { $cr3 = (int)$rw3['c']; }
+if ($cr3 === 0) { $koneksi->query("ALTER TABLE `barang_keluar` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang_keluar` ADD INDEX `idx_user` (`user_id`)"); }
+
 // Memuat library Dompdf
 require_once 'libs/dompdf/autoload.inc.php'; 
 use Dompdf\Dompdf;
@@ -20,8 +32,9 @@ $subTitle = '';
 $result = null;
 if ($report === 'stok') {
   $filter_stok = isset($_GET['min_stok']) ? (int)$_GET['min_stok'] : 0;
-  $stmt = $koneksi->prepare("SELECT * FROM barang WHERE stok >= ? ORDER BY nama_barang ASC");
-  $stmt->bind_param("i", $filter_stok);
+$stmt = $koneksi->prepare("SELECT * FROM barang WHERE user_id = ? AND stok >= ? ORDER BY nama_barang ASC");
+$uid = (int)($_SESSION['user_id'] ?? 0);
+$stmt->bind_param("ii", $uid, $filter_stok);
   $stmt->execute();
   $result = $stmt->get_result();
   $htmlTitle = 'LOGISTIFY - LAPORAN DATA BARANG';
@@ -45,8 +58,9 @@ if ($report === 'stok') {
     keterangan TEXT DEFAULT NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-  $stmt = $koneksi->prepare("SELECT tanggal_masuk, nama_barang, kode_barang, jumlah_masuk, satuan, supplier, lokasi, dokumen, foto_barang, keterangan FROM barang_masuk WHERE YEAR(tanggal_masuk) = ? ORDER BY tanggal_masuk DESC, id DESC");
-  $stmt->bind_param("i", $year);
+  $stmt = $koneksi->prepare("SELECT tanggal_masuk, nama_barang, kode_barang, jumlah_masuk, satuan, supplier, lokasi, dokumen, foto_barang, keterangan FROM barang_masuk WHERE user_id = ? AND YEAR(tanggal_masuk) = ? ORDER BY tanggal_masuk DESC, id DESC");
+  $uid = (int)($_SESSION['user_id'] ?? 0);
+  $stmt->bind_param("ii", $uid, $year);
   $stmt->execute();
   $result = $stmt->get_result();
 
@@ -64,15 +78,18 @@ if ($report === 'stok') {
     keterangan TEXT DEFAULT NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-  $stmt = $koneksi->prepare("SELECT tanggal_keluar, nama_barang, kode_barang, jumlah_keluar, tujuan, dokumen, keterangan FROM barang_keluar WHERE YEAR(tanggal_keluar) = ? ORDER BY tanggal_keluar DESC, id DESC");
-  $stmt->bind_param("i", $year);
+  $stmt = $koneksi->prepare("SELECT tanggal_keluar, nama_barang, kode_barang, jumlah_keluar, tujuan, dokumen, keterangan FROM barang_keluar WHERE user_id = ? AND YEAR(tanggal_keluar) = ? ORDER BY tanggal_keluar DESC, id DESC");
+  $uid = (int)($_SESSION['user_id'] ?? 0);
+  $stmt->bind_param("ii", $uid, $year);
   $stmt->execute();
   $result = $stmt->get_result();
 
   $htmlTitle = 'LOGISTIFY - LAPORAN BARANG KELUAR';
   $subTitle = 'Periode: Januari - Desember ' . $year;
 } else {
-  $stmt = $koneksi->prepare("SELECT * FROM barang ORDER BY nama_barang ASC");
+  $stmt = $koneksi->prepare("SELECT * FROM barang WHERE user_id = ? ORDER BY nama_barang ASC");
+  $uid = (int)($_SESSION['user_id'] ?? 0);
+  $stmt->bind_param('i',$uid);
   $stmt->execute();
   $result = $stmt->get_result();
 }

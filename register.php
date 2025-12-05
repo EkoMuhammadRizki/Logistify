@@ -16,9 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST['password'];
     $konfirmasi_password = $_POST['konfirmasi_password'];
 
-    // Validasi sederhana
     if (empty($username) || empty($email) || empty($password) || empty($konfirmasi_password)) {
         $error_message = "Semua kolom wajib diisi.";
+    } elseif (strlen($password) < 8) {
+        $error_message = "Password harus minimal 8 karakter.";
     } elseif ($password !== $konfirmasi_password) {
         $error_message = "Konfirmasi password tidak cocok.";
     } else {
@@ -90,12 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           </div>
           <div class="input-wrap">
             <span class="input-icon"><i class="bi bi-lock"></i></span>
-            <input type="password" name="password" id="registerPassword" placeholder="Password" required autocomplete="new-password">
+            <input type="password" name="password" id="registerPassword" placeholder="Password" required autocomplete="new-password" minlength="8">
             <button type="button" class="toggle-eye" id="toggleRegisterPassword" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
           </div>
           <div class="input-wrap">
             <span class="input-icon"><i class="bi bi-lock"></i></span>
-            <input type="password" name="konfirmasi_password" id="registerPasswordConfirm" placeholder="Konfirmasi Password" required autocomplete="new-password">
+            <input type="password" name="konfirmasi_password" id="registerPasswordConfirm" placeholder="Konfirmasi Password" required autocomplete="new-password" minlength="8">
             <button type="button" class="toggle-eye" id="toggleRegisterPasswordConfirm" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
           </div>
           <button type="submit" class="btn-auth">DAFTAR</button>

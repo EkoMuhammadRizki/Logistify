@@ -27,46 +27,40 @@ $error_message = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
-    $remember = isset($_POST['remember_me']); // Cookie
+    $remember = isset($_POST['remember_me']);
 
-    // **GET/POST:** Mengambil data login menggunakan POST
-    // Proses autentikasi:
-    // - Ambil hash password dari DB menggunakan prepared statement.
-    // - Verifikasi menggunakan password_verify.
-    // - Jika sukses: set SESSION dan (opsional) COOKIE "remember_me".
-
-    $stmt = $koneksi->prepare("SELECT id, password FROM users WHERE username = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-
-    if ($user && password_verify($password, $user['password'])) {
-        // Login Berhasil!
-        $_SESSION['user_id'] = $user['id']; // **SESSION**
-        
-        if ($remember) {
-            $token = bin2hex(random_bytes(32)); 
-            // Simpan token ke database
-            $stmt_token = $koneksi->prepare("UPDATE users SET token_cookie = ? WHERE id = ?");
-            $stmt_token->bind_param("si", $token, $user['id']);
-            $stmt_token->execute();
-            // Set Cookie
-            setcookie('remember_me', $token, time() + (86400 * 30), "/"); // **COOKIE** 30 hari
-        } else {
-            // Hapus cookie dan token jika sebelumnya pernah di-set
-            if (isset($_COOKIE['remember_me'])) {
-                setcookie('remember_me', '', time() - 3600, "/");
-            }
-            $stmt_clear = $koneksi->prepare("UPDATE users SET token_cookie = NULL WHERE id = ?");
-            $stmt_clear->bind_param("i", $user['id']);
-            $stmt_clear->execute();
-        }
-        
-        header('Location: dashboard.php?status=login_sukses');
-        exit;
+    if (strlen($password) < 8) {
+        $error_message = "Password harus minimal 8 karakter.";
     } else {
-        $error_message = "Username atau password salah!";
+        $stmt = $koneksi->prepare("SELECT id, password FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            
+            if ($remember) {
+                $token = bin2hex(random_bytes(32));
+                $stmt_token = $koneksi->prepare("UPDATE users SET token_cookie = ? WHERE id = ?");
+                $stmt_token->bind_param("si", $token, $user['id']);
+                $stmt_token->execute();
+                setcookie('remember_me', $token, time() + (86400 * 30), "/");
+            } else {
+                if (isset($_COOKIE['remember_me'])) {
+                    setcookie('remember_me', '', time() - 3600, "/");
+                }
+                $stmt_clear = $koneksi->prepare("UPDATE users SET token_cookie = NULL WHERE id = ?");
+                $stmt_clear->bind_param("i", $user['id']);
+                $stmt_clear->execute();
+            }
+            
+            header('Location: dashboard.php?status=login_sukses');
+            exit;
+        } else {
+            $error_message = "Username atau password salah!";
+        }
     }
 }
 ?>
@@ -117,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           </div>
           <div class="input-wrap">
             <span class="input-icon"><i class="bi bi-lock"></i></span>
-            <input type="password" name="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+            <input type="password" name="password" id="loginPassword" placeholder="Password" required autocomplete="current-password" minlength="8">
             <button type="button" class="toggle-eye" id="toggleLoginPassword" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
           </div>
           <div class="mb-2 form-check">

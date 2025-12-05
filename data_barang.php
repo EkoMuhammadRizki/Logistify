@@ -8,9 +8,17 @@ if (!is_logged_in($koneksi)) {
   exit;
 }
 
-// Ambil data barang
-$query = "SELECT * FROM barang ORDER BY id DESC";
-$result = $koneksi->query($query);
+$stmtChk = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang' AND column_name = 'user_id'");
+$stmtChk->execute();
+$c = 0; $rs = $stmtChk->get_result(); if ($rs && ($row = $rs->fetch_assoc())) { $c = (int)$row['c']; }
+if ($c === 0) { $koneksi->query("ALTER TABLE `barang` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang` ADD INDEX `idx_user` (`user_id`)"); }
+
+// Ambil data barang milik user
+$stmt = $koneksi->prepare("SELECT * FROM barang WHERE user_id = ? ORDER BY id DESC");
+$uid = (int)($_SESSION['user_id'] ?? 0);
+$stmt->bind_param('i', $uid);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="id">

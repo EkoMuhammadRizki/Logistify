@@ -16,7 +16,12 @@
       return 'Nilai yang dimasukkan tidak sesuai tipe.';
     }
     if (v.patternMismatch) return 'Format ' + label + ' tidak sesuai pola yang ditentukan.';
-    if (v.tooShort) return label + ' terlalu pendek.';
+    if (v.tooShort) {
+      var isRegister = /register\.php$/i.test(window.location.pathname);
+      if (isRegister && input.name === 'password') return 'Password Minimal 8 Karakter';
+      if (isRegister && input.name === 'konfirmasi_password') return 'Konfirmasi Password Minimal 8 Karakter';
+      return label + ' terlalu pendek.';
+    }
     if (v.tooLong) return label + ' terlalu panjang.';
     if (v.rangeUnderflow) return label + ' terlalu kecil.';
     if (v.rangeOverflow) return label + ' terlalu besar.';
@@ -71,7 +76,7 @@
           if (typeof Swal !== 'undefined') {
             Swal.fire({
               icon: 'warning',
-              title: 'Validasi Form',
+              title: 'Perhatian!',
               text: invalidMsg,
               confirmButtonText: 'OK',
               customClass: { confirmButton: 'btn btn-success' },

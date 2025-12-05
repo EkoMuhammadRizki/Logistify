@@ -20,29 +20,38 @@ function table_exists(mysqli $db, $name){
 $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
 $masuk = array_fill(0, 12, 0);
 $keluar = array_fill(0, 12, 0);
+$uid = (int)($_SESSION['user_id'] ?? 0);
 
 if (table_exists($koneksi, 'barang_masuk')) {
-  $sql = "SELECT MONTH(tanggal_masuk) AS m, COALESCE(SUM(jumlah_masuk),0) AS total FROM barang_masuk WHERE YEAR(tanggal_masuk) = ? GROUP BY m";
-  if ($stmt = $koneksi->prepare($sql)) {
-    $stmt->bind_param('i', $year);
-    if ($stmt->execute()) {
-      $res = $stmt->get_result();
-      while($row = $res->fetch_assoc()){
-        $idx = max(1, min(12, (int)$row['m'])) - 1;
-        $masuk[$idx] = (int)$row['total'];
+  $colChk = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_masuk' AND column_name = 'user_id'");
+  $colChk->execute(); $hasUser = false; if ($r = $colChk->get_result()->fetch_assoc()) { $hasUser = ((int)$r['c'] > 0); }
+  if ($hasUser) {
+    $sql = "SELECT MONTH(tanggal_masuk) AS m, COALESCE(SUM(jumlah_masuk),0) AS total FROM barang_masuk WHERE YEAR(tanggal_masuk) = ? AND user_id = ? GROUP BY m";
+    if ($stmt = $koneksi->prepare($sql)) {
+      $stmt->bind_param('ii', $year, $uid);
+      if ($stmt->execute()) {
+        $res = $stmt->get_result();
+        while($row = $res->fetch_assoc()){
+          $idx = max(1, min(12, (int)$row['m'])) - 1;
+          $masuk[$idx] = (int)$row['total'];
+        }
       }
     }
   }
 }
 if (table_exists($koneksi, 'barang_keluar')) {
-  $sql = "SELECT MONTH(tanggal_keluar) AS m, COALESCE(SUM(jumlah_keluar),0) AS total FROM barang_keluar WHERE YEAR(tanggal_keluar) = ? GROUP BY m";
-  if ($stmt = $koneksi->prepare($sql)) {
-    $stmt->bind_param('i', $year);
-    if ($stmt->execute()) {
-      $res = $stmt->get_result();
-      while($row = $res->fetch_assoc()){
-        $idx = max(1, min(12, (int)$row['m'])) - 1;
-        $keluar[$idx] = (int)$row['total'];
+  $colChk = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_keluar' AND column_name = 'user_id'");
+  $colChk->execute(); $hasUser = false; if ($r = $colChk->get_result()->fetch_assoc()) { $hasUser = ((int)$r['c'] > 0); }
+  if ($hasUser) {
+    $sql = "SELECT MONTH(tanggal_keluar) AS m, COALESCE(SUM(jumlah_keluar),0) AS total FROM barang_keluar WHERE YEAR(tanggal_keluar) = ? AND user_id = ? GROUP BY m";
+    if ($stmt = $koneksi->prepare($sql)) {
+      $stmt->bind_param('ii', $year, $uid);
+      if ($stmt->execute()) {
+        $res = $stmt->get_result();
+        while($row = $res->fetch_assoc()){
+          $idx = max(1, min(12, (int)$row['m'])) - 1;
+          $keluar[$idx] = (int)$row['total'];
+        }
       }
     }
   }

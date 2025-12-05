@@ -14,15 +14,22 @@ try {
     $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 5;
 
     // Agregasi total barang keluar per barang (tahun berjalan)
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    // Pastikan kolom user_id ada
+    if ($chk = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_keluar' AND column_name = 'user_id'")) {
+        $chk->execute(); $rs = $chk->get_result(); $c = 0; if ($rs && ($rw = $rs->fetch_assoc())) { $c = (int)$rw['c']; }
+        if ($c === 0) { $koneksi->query("ALTER TABLE `barang_keluar` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang_keluar` ADD INDEX `idx_user` (`user_id`)"); }
+    }
+
     $sql = "SELECT nama_barang, SUM(jumlah_keluar) AS total_keluar
             FROM barang_keluar
-            WHERE YEAR(tanggal_keluar) = ?
+            WHERE YEAR(tanggal_keluar) = ? AND user_id = ?
             GROUP BY nama_barang
             ORDER BY total_keluar DESC, nama_barang ASC
             LIMIT ?";
 
     $stmt = $koneksi->prepare($sql);
-    $stmt->bind_param("ii", $year, $limit);
+    $stmt->bind_param("iii", $year, $uid, $limit);
     $stmt->execute();
     $res = $stmt->get_result();
 

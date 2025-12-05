@@ -3,6 +3,16 @@ require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);
 
+$stmtChk = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_keluar' AND column_name = 'user_id'");
+$stmtChk->execute();
+$c = 0; $rs = $stmtChk->get_result(); if ($rs && ($row = $rs->fetch_assoc())) { $c = (int)$row['c']; }
+if ($c === 0) { $koneksi->query("ALTER TABLE `barang_keluar` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang_keluar` ADD INDEX `idx_user` (`user_id`)"); }
+
+$stmtChk2 = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang' AND column_name = 'user_id'");
+$stmtChk2->execute();
+$c2 = 0; $rs2 = $stmtChk2->get_result(); if ($rs2 && ($row2 = $rs2->fetch_assoc())) { $c2 = (int)$row2['c']; }
+if ($c2 === 0) { $koneksi->query("ALTER TABLE `barang` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang` ADD INDEX `idx_user` (`user_id`)"); }
+
 $q = isset($_GET['q']) ? trim($_GET['q']) : '';
 $limit = isset($_GET['limit']) ? max(1, min(200, (int)$_GET['limit'])) : 20;
 $table_missing = false; $result = null;
@@ -13,7 +23,7 @@ if ($check && $row = $check->fetch_assoc()) { $exists = ((int)$row['c'] > 0); }
 
 $params = []; $types = '';
 if ($exists) {
-  $sql = "SELECT id, tanggal_keluar, nama_barang, kode_barang, jumlah_keluar, tujuan, dokumen, keterangan FROM barang_keluar WHERE 1=1";
+  $sql = "SELECT id, tanggal_keluar, nama_barang, kode_barang, jumlah_keluar, tujuan, dokumen, keterangan FROM barang_keluar WHERE user_id = ?";
   if ($q !== '') {
     $sql .= " AND (nama_barang LIKE ? OR kode_barang LIKE ? OR tujuan LIKE ? OR keterangan LIKE ?)";
     $like = '%' . $q . '%';
@@ -24,6 +34,9 @@ if ($exists) {
   $params[] = $limit; $types .= 'i';
   try {
     $stmt = $koneksi->prepare($sql);
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $types = 'i' . $types;
+    $params = array_merge([$uid], $params);
     if ($types !== '') { $stmt->bind_param($types, ...$params); }
     $stmt->execute();
     $result = $stmt->get_result();
@@ -57,7 +70,7 @@ if ($exists) {
         </div>
       </div>
 
-      <?php $items = $koneksi->query("SELECT id, nama_barang FROM barang ORDER BY nama_barang ASC"); ?>
+      <?php $uid = (int)($_SESSION['user_id'] ?? 0); $stmtIt = $koneksi->prepare("SELECT id, nama_barang FROM barang WHERE user_id = ? ORDER BY nama_barang ASC"); $stmtIt->bind_param('i',$uid); $stmtIt->execute(); $items = $stmtIt->get_result(); ?>
       <form id="formKeluar" class="border rounded p-3 mb-3" enctype="multipart/form-data">
         <h5 class="mb-3">Tambah Transaksi Barang Keluar</h5>
         <div class="row g-3">

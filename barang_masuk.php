@@ -7,6 +7,26 @@ require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);
 
+$stmtChk = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_masuk' AND column_name = 'user_id'");
+$stmtChk->execute();
+$c = 0; $rs = $stmtChk->get_result(); if ($rs && ($row = $rs->fetch_assoc())) { $c = (int)$row['c']; }
+if ($c === 0) { $koneksi->query("ALTER TABLE `barang_masuk` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang_masuk` ADD INDEX `idx_user` (`user_id`)"); }
+
+$stmtChk2 = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang' AND column_name = 'user_id'");
+$stmtChk2->execute();
+$c2 = 0; $rs2 = $stmtChk2->get_result(); if ($rs2 && ($row2 = $rs2->fetch_assoc())) { $c2 = (int)$row2['c']; }
+if ($c2 === 0) { $koneksi->query("ALTER TABLE `barang` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang` ADD INDEX `idx_user` (`user_id`)"); }
+
+$stmtChk3 = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'suppliers' AND column_name = 'user_id'");
+$stmtChk3->execute();
+$c3 = 0; $rs3 = $stmtChk3->get_result(); if ($rs3 && ($row3 = $rs3->fetch_assoc())) { $c3 = (int)$row3['c']; }
+if ($c3 === 0) { $koneksi->query("ALTER TABLE `suppliers` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `suppliers` ADD INDEX `idx_user` (`user_id`)"); }
+
+$stmtChk4 = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'locations' AND column_name = 'user_id'");
+$stmtChk4->execute();
+$c4 = 0; $rs4 = $stmtChk4->get_result(); if ($rs4 && ($row4 = $rs4->fetch_assoc())) { $c4 = (int)$row4['c']; }
+if ($c4 === 0) { $koneksi->query("ALTER TABLE `locations` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `locations` ADD INDEX `idx_user` (`user_id`)"); }
+
 // Parameter filter sederhana
 // Filter minimal untuk daftar transaksi masuk
 $q = isset($_GET['q']) ? trim($_GET['q']) : '';
@@ -24,7 +44,7 @@ if ($check && $row = $check->fetch_assoc()) { $exists = ((int)$row['c'] > 0); }
 
 $params = []; $types = '';
 if ($exists) {
-  $sql = "SELECT id, tanggal_masuk, nama_barang, kode_barang, jumlah_masuk, satuan, supplier, lokasi, dokumen, foto_barang, keterangan FROM barang_masuk WHERE 1=1";
+  $sql = "SELECT id, tanggal_masuk, nama_barang, kode_barang, jumlah_masuk, satuan, supplier, lokasi, dokumen, foto_barang, keterangan FROM barang_masuk WHERE 1=1 AND user_id = ?";
   if ($q !== '') {
     $sql .= " AND (nama_barang LIKE ? OR kode_barang LIKE ? OR supplier LIKE ? OR lokasi LIKE ? OR keterangan LIKE ?)";
     $like = '%' . $q . '%';
@@ -36,6 +56,9 @@ if ($exists) {
 
   try {
     $stmt = $koneksi->prepare($sql);
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $types = 'i' . $types;
+    $params = array_merge([$uid], $params);
     if ($types !== '') { $stmt->bind_param($types, ...$params); }
     $stmt->execute();
     $result = $stmt->get_result();
@@ -87,7 +110,7 @@ if ($exists) {
       </div>
 
       <!-- Form input Barang Masuk (AJAX) untuk item yang sudah ada -->
-      <?php $items = $koneksi->query("SELECT id, nama_barang FROM barang ORDER BY nama_barang ASC"); ?>
+      <?php $uid = (int)($_SESSION['user_id'] ?? 0); $stmtIt = $koneksi->prepare("SELECT id, nama_barang FROM barang WHERE user_id = ? ORDER BY nama_barang ASC"); $stmtIt->bind_param('i',$uid); $stmtIt->execute(); $items = $stmtIt->get_result(); ?>
       <form id="formMasuk" class="border rounded p-3 mb-3" enctype="multipart/form-data">
         <h5 class="mb-3">Tambah Transaksi Barang Masuk</h5>
         <div class="row g-3">
@@ -118,9 +141,10 @@ if ($exists) {
               if ($rs = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'suppliers'")) {
                 $row = $rs->fetch_assoc(); $supReady = ((int)$row['c'] > 0);
                 if ($supReady) {
-                  if ($ls = $koneksi->query("SELECT id, nama_supplier FROM suppliers ORDER BY nama_supplier ASC")) {
-                    while($r = $ls->fetch_assoc()){ $suppliers[] = $r; }
-                  }
+                  $uid = (int)($_SESSION['user_id'] ?? 0);
+                  $stmtSup = $koneksi->prepare("SELECT id, nama_supplier FROM suppliers WHERE user_id = ? ORDER BY nama_supplier ASC");
+                  $stmtSup->bind_param('i',$uid);
+                  if ($stmtSup->execute()) { $resSup = $stmtSup->get_result(); while($r = $resSup->fetch_assoc()){ $suppliers[] = $r; } }
                 }
               }
             ?>

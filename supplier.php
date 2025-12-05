@@ -11,10 +11,10 @@ $check = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables WH
 $exists = ($check && ($row = $check->fetch_assoc()) && ((int)$row['c'] > 0));
 $params = []; $types = '';
 if ($exists) {
-  $sql = "SELECT id, nama_supplier, kontak, email, alamat, keterangan FROM suppliers WHERE 1=1";
+  $sql = "SELECT id, nama_supplier, kontak, email, alamat, keterangan FROM suppliers WHERE user_id = ?";
   if ($q !== '') { $sql .= " AND (nama_supplier LIKE ? OR kontak LIKE ? OR email LIKE ? OR alamat LIKE ? OR keterangan LIKE ?)"; $like = '%'.$q.'%'; array_push($params,$like,$like,$like,$like,$like); $types.='sssss'; }
   $sql .= " ORDER BY nama_supplier ASC LIMIT ?"; $params[] = $limit; $types.='i';
-  try { $stmt = $koneksi->prepare($sql); if ($types!==''){ $stmt->bind_param($types, ...$params);} $stmt->execute(); $result = $stmt->get_result(); } catch(Throwable $e){ $table_missing = true; }
+  try { $stmt = $koneksi->prepare($sql); $uid = (int)($_SESSION['user_id'] ?? 0); $types = 'i' . $types; $params = array_merge([$uid], $params); if ($types!==''){ $stmt->bind_param($types, ...$params);} $stmt->execute(); $result = $stmt->get_result(); } catch(Throwable $e){ $table_missing = true; }
 } else { $table_missing = true; }
 ?>
 <!DOCTYPE html>

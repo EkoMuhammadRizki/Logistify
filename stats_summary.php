@@ -7,6 +7,8 @@
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/config/koneksi.php';
+require_once __DIR__ . '/functions/auth.php';
+require_login($koneksi);
 
 $response = [
   'status' => 'error',
@@ -17,14 +19,21 @@ $response = [
 ];
 
 try {
+  // Pastikan kolom user_id ada di tabel barang
+  if ($chk = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang' AND column_name = 'user_id'")) {
+    $chk->execute(); $res = $chk->get_result(); $c = 0; if ($res && ($r = $res->fetch_assoc())) { $c = (int)$r['c']; }
+    if ($c === 0) { $koneksi->query("ALTER TABLE `barang` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang` ADD INDEX `idx_user` (`user_id`)"); }
+  }
+  $uid = (int)($_SESSION['user_id'] ?? 0);
   $sql = "SELECT 
             COALESCE(SUM(stok),0) AS total_qty,
             SUM(CASE WHEN stok > 0 AND stok <= 5 THEN 1 ELSE 0 END) AS menipis_count,
             SUM(CASE WHEN stok = 0 THEN 1 ELSE 0 END) AS habis_count
-          FROM barang";
+          FROM barang WHERE user_id = ?";
 
-  if ($res = $koneksi->query($sql)) {
-    if ($row = $res->fetch_assoc()) {
+  if ($stmt = $koneksi->prepare($sql)) {
+    $stmt->bind_param('i', $uid);
+    if ($stmt->execute() && ($res = $stmt->get_result()) && ($row = $res->fetch_assoc())) {
       $response['status'] = 'success';
       $response['message'] = 'OK';
       $response['total_qty'] = (int)$row['total_qty'];

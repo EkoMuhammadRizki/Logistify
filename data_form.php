@@ -3,6 +3,18 @@ require_once 'config/koneksi.php';
 require_once 'functions/auth.php';
 require_login($koneksi);
 
+$ensure = function(mysqli $db, string $table){
+  $stmt = $db->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = 'user_id'");
+  $stmt->bind_param('s', $table);
+  $stmt->execute();
+  $c = 0; $r = $stmt->get_result(); if ($r && ($row = $r->fetch_assoc())) { $c = (int)$row['c']; }
+  if ($c === 0) { $db->query("ALTER TABLE `".$table."` ADD COLUMN `user_id` INT DEFAULT NULL"); $db->query("ALTER TABLE `".$table."` ADD INDEX `idx_user` (`user_id`)"); }
+};
+
+$ensure($koneksi, 'barang');
+$ensure($koneksi, 'suppliers');
+$ensure($koneksi, 'locations');
+
 $is_edit = false;
 $data = ['id' => '', 'nama_barang' => '', 'kode_barang' => '', 'kategori' => '', 'satuan' => '', 'supplier' => '', 'lokasi' => '', 'deskripsi' => '', 'stok' => '', 'harga' => '', 'foto_barang' => '', 'dokumen' => ''];
 $action = 'tambah';
@@ -15,8 +27,9 @@ if (isset($_GET['id'])) {
     $action = 'edit';
     $title = 'Edit Barang';
 
-    $stmt = $koneksi->prepare("SELECT * FROM barang WHERE id = ?");
-    $stmt->bind_param("i", $id);
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $stmt = $koneksi->prepare("SELECT * FROM barang WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $id, $uid);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result->num_rows == 1) {
@@ -32,18 +45,20 @@ $supReady = false; $suppliers = [];
 if ($rs = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'suppliers'")) {
   $row = $rs->fetch_assoc(); $supReady = ((int)$row['c'] > 0);
   if ($supReady) {
-    if ($ls = $koneksi->query("SELECT id, nama_supplier FROM suppliers ORDER BY nama_supplier ASC")) {
-      while($r = $ls->fetch_assoc()){ $suppliers[] = $r; }
-    }
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $stmtSup = $koneksi->prepare("SELECT id, nama_supplier FROM suppliers WHERE user_id = ? ORDER BY nama_supplier ASC");
+    $stmtSup->bind_param('i',$uid);
+    if ($stmtSup->execute()) { $resSup = $stmtSup->get_result(); while($r = $resSup->fetch_assoc()){ $suppliers[] = $r; } }
   }
 }
 $locReady = false; $locations = [];
 if ($rs2 = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'locations'")) {
   $row2 = $rs2->fetch_assoc(); $locReady = ((int)$row2['c'] > 0);
   if ($locReady) {
-    if ($ll = $koneksi->query("SELECT id, nama_lokasi, kode_lokasi FROM locations ORDER BY nama_lokasi ASC")) {
-      while($r = $ll->fetch_assoc()){ $locations[] = $r; }
-    }
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $stmtLoc = $koneksi->prepare("SELECT id, nama_lokasi, kode_lokasi FROM locations WHERE user_id = ? ORDER BY nama_lokasi ASC");
+    $stmtLoc->bind_param('i',$uid);
+    if ($stmtLoc->execute()) { $resLoc = $stmtLoc->get_result(); while($r = $resLoc->fetch_assoc()){ $locations[] = $r; } }
   }
 }
 ?>

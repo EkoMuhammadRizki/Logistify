@@ -24,13 +24,13 @@ try {
     }
 
     if ($hasSoftDelete) {
-        $sql = "SELECT nama_barang, stok FROM barang WHERE is_deleted = 0 AND stok < 5 ORDER BY stok ASC, nama_barang ASC LIMIT ?";
+        $sql = "SELECT nama_barang, stok FROM barang WHERE user_id = ? AND is_deleted = 0 AND stok < 5 ORDER BY stok ASC, nama_barang ASC LIMIT ?";
     } else {
-        $sql = "SELECT nama_barang, stok FROM barang WHERE stok < 5 ORDER BY stok ASC, nama_barang ASC LIMIT ?";
+        $sql = "SELECT nama_barang, stok FROM barang WHERE user_id = ? AND stok < 5 ORDER BY stok ASC, nama_barang ASC LIMIT ?";
     }
 
     $stmt = $koneksi->prepare($sql);
-    $stmt->bind_param("i", $limit);
+    $stmt->bind_param("ii", $uid, $limit);
     $stmt->execute();
     $res = $stmt->get_result();
 
@@ -51,3 +51,9 @@ try {
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => 'Gagal memuat data stok minimum']);
 }
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    // Pastikan kolom user_id ada di tabel barang
+    if ($chkUser = $koneksi->prepare("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang' AND column_name = 'user_id'")) {
+        $chkUser->execute(); $resUser = $chkUser->get_result(); $cu = 0; if ($resUser && ($ru = $resUser->fetch_assoc())) { $cu = (int)$ru['c']; }
+        if ($cu === 0) { $koneksi->query("ALTER TABLE `barang` ADD COLUMN `user_id` INT DEFAULT NULL"); $koneksi->query("ALTER TABLE `barang` ADD INDEX `idx_user` (`user_id`)"); }
+    }

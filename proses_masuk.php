@@ -48,6 +48,7 @@ switch ($action) {
   case 'migrate': {
     $sql = "CREATE TABLE IF NOT EXISTS barang_masuk (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT DEFAULT NULL,
       tanggal_masuk DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       nama_barang VARCHAR(255) NOT NULL,
       kode_barang VARCHAR(100) NOT NULL,
@@ -59,9 +60,15 @@ switch ($action) {
       foto_barang VARCHAR(255) DEFAULT NULL,
       keterangan TEXT DEFAULT NULL,
       KEY idx_kode_barang (kode_barang),
-      KEY idx_tanggal (tanggal_masuk)
+      KEY idx_tanggal (tanggal_masuk),
+      KEY idx_user (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     if (!$koneksi->query($sql)) { json_err('Gagal membuat tabel: ' . $koneksi->error); }
+    $chk = $koneksi->query("SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_masuk' AND column_name = 'user_id'");
+    if ($chk && ($row = $chk->fetch_assoc()) && (int)$row['c'] === 0) {
+      $koneksi->query("ALTER TABLE barang_masuk ADD COLUMN user_id INT DEFAULT NULL");
+      $koneksi->query("ALTER TABLE barang_masuk ADD INDEX idx_user (user_id)");
+    }
     // Pastikan kolom foto_barang ada dan kolom supplier/lokasi nullable untuk kompatibilitas
     $colCheck = $koneksi->query("SELECT COLUMN_NAME, IS_NULLABLE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'barang_masuk'");
     $cols = [];
@@ -81,8 +88,9 @@ switch ($action) {
     // Ambil data terpilih dari master barang
     $barang_id = isset($_POST['barang_id']) ? (int)$_POST['barang_id'] : 0;
     if ($barang_id < 1) { json_err('Barang belum dipilih'); }
-    $resBarang = $koneksi->prepare("SELECT id, nama_barang FROM barang WHERE id = ?");
-    $resBarang->bind_param('i', $barang_id);
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $resBarang = $koneksi->prepare("SELECT id, nama_barang FROM barang WHERE id = ? AND user_id = ?");
+    $resBarang->bind_param('ii', $barang_id, $uid);
     $resBarang->execute();
     $rowBr = $resBarang->get_result()->fetch_assoc();
     if (!$rowBr) { json_err('Barang tidak ditemukan', 404); }
@@ -100,10 +108,10 @@ switch ($action) {
     if ($tanggal === null || $tanggal === '') { $tanggal = date('Y-m-d H:i:s'); } else { $tanggal = str_replace('T', ' ', $tanggal) . ':00'; }
 
     // Simpan transaksi barang_masuk
-    $stmt = $koneksi->prepare("INSERT INTO barang_masuk (tanggal_masuk, nama_barang, kode_barang, jumlah_masuk, satuan, supplier, lokasi, dokumen, foto_barang, keterangan) VALUES (?,?,?,?,?,?,?,?,?,?)");
+    $stmt = $koneksi->prepare("INSERT INTO barang_masuk (user_id, tanggal_masuk, nama_barang, kode_barang, jumlah_masuk, satuan, supplier, lokasi, dokumen, foto_barang, keterangan) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
     $nullFoto = null;
     $kodeResolved = 'BRG-' . str_pad((string)$rowBr['id'], 4, '0', STR_PAD_LEFT);
-    $stmt->bind_param('sssissssss', $tanggal, $rowBr['nama_barang'], $kodeResolved, $jumlah, $satuan, $supplier, $lokasi, $dokumen, $nullFoto, $keterangan);
+    $stmt->bind_param('isssissssss', $uid, $tanggal, $rowBr['nama_barang'], $kodeResolved, $jumlah, $satuan, $supplier, $lokasi, $dokumen, $nullFoto, $keterangan);
     if (!$stmt->execute()) { json_err('Gagal menyimpan: ' . $stmt->error); }
 
     // Update stok di master barang
@@ -117,14 +125,15 @@ switch ($action) {
     $id = isset($_POST['id']) ? (int)$_POST['id'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
     if ($id < 1) { json_err('ID tidak valid'); }
     // Ambil dokumen
-    $stmt = $koneksi->prepare("SELECT dokumen FROM barang_masuk WHERE id = ?");
-    $stmt->bind_param('i', $id);
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $stmt = $koneksi->prepare("SELECT dokumen FROM barang_masuk WHERE id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $id, $uid);
     $stmt->execute();
     $res = $stmt->get_result();
     if (!$res || $res->num_rows === 0) { json_err('Data tidak ditemukan', 404); }
     $row = $res->fetch_assoc();
-    $stmtDel = $koneksi->prepare("DELETE FROM barang_masuk WHERE id = ?");
-    $stmtDel->bind_param('i', $id);
+    $stmtDel = $koneksi->prepare("DELETE FROM barang_masuk WHERE id = ? AND user_id = ?");
+    $stmtDel->bind_param('ii', $id, $uid);
     if (!$stmtDel->execute()) { json_err('Gagal menghapus: ' . $stmtDel->error); }
     if (!empty($row['dokumen'])) {
       @unlink(__DIR__ . DIRECTORY_SEPARATOR . 'uplouds' . DIRECTORY_SEPARATOR . $row['dokumen']);

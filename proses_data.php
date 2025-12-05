@@ -85,6 +85,7 @@ function ensure_barang_columns(mysqli $db) {
     if (!isset($cols['supplier'])) { $db->query("ALTER TABLE barang ADD COLUMN supplier VARCHAR(255) DEFAULT NULL"); }
     if (!isset($cols['lokasi'])) { $db->query("ALTER TABLE barang ADD COLUMN lokasi VARCHAR(255) DEFAULT NULL"); }
     if (!isset($cols['dokumen'])) { $db->query("ALTER TABLE barang ADD COLUMN dokumen VARCHAR(255) DEFAULT NULL"); }
+    if (!isset($cols['user_id'])) { $db->query("ALTER TABLE barang ADD COLUMN user_id INT DEFAULT NULL"); $db->query("ALTER TABLE barang ADD INDEX idx_user (user_id)"); }
     // Kolom soft-delete
     if (!isset($cols['is_deleted'])) { $db->query("ALTER TABLE barang ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0"); }
     if (!isset($cols['deleted_at'])) { $db->query("ALTER TABLE barang ADD COLUMN deleted_at DATETIME DEFAULT NULL"); }
@@ -114,10 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         $harga = normalize_price($_POST['harga'] ?? '');
         if ($nama === '') { echo json_encode(['status'=>'error','message'=>'Nama barang wajib diisi']); exit; }
 
-        $stmt = $koneksi->prepare("INSERT INTO barang (nama_barang, kode_barang, kategori, satuan, supplier, lokasi, deskripsi, stok, harga, foto_barang, dokumen) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt = $koneksi->prepare("INSERT INTO barang (nama_barang, kode_barang, kategori, satuan, supplier, lokasi, deskripsi, stok, harga, foto_barang, dokumen, user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
         $foto = $upload_foto['filename'];
         $doc = $upload_doc['filename'];
-        $stmt->bind_param("sssssssidss", $nama, $kode, $kategori, $satuan, $supplier, $lokasi, $deskripsi, $stok, $harga, $foto, $doc);
+        $uid = (int)($_SESSION['user_id'] ?? 0);
+        $stmt->bind_param("sssssssidssi", $nama, $kode, $kategori, $satuan, $supplier, $lokasi, $deskripsi, $stok, $harga, $foto, $doc, $uid);
         if (!$stmt->execute()) { echo json_encode(['status'=>'error','message'=>'Gagal menyimpan: '.$stmt->error]); exit; }
         echo json_encode(['status'=>'success','message'=>'Barang ditambahkan','data'=>['id'=>$stmt->insert_id]]); exit;
 
@@ -143,8 +145,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         $id = (int)($_POST['id'] ?? 0);
         if ($id < 1) { echo json_encode(['status'=>'error','message'=>'ID tidak valid']); exit; }
 
-        $stmt = $koneksi->prepare("UPDATE barang SET nama_barang=?, kode_barang=?, kategori=?, satuan=?, supplier=?, lokasi=?, deskripsi=?, stok=?, harga=?, foto_barang=?, dokumen=? WHERE id=?");
-        $stmt->bind_param("sssssssidssi", $nama, $kode, $kategori, $satuan, $supplier, $lokasi, $deskripsi, $stok, $harga, $foto_baru, $doc_baru, $id);
+        $stmt = $koneksi->prepare("UPDATE barang SET nama_barang=?, kode_barang=?, kategori=?, satuan=?, supplier=?, lokasi=?, deskripsi=?, stok=?, harga=?, foto_barang=?, dokumen=? WHERE id=? AND user_id=?");
+        $uid = (int)($_SESSION['user_id'] ?? 0);
+        $stmt->bind_param("sssssssidssii", $nama, $kode, $kategori, $satuan, $supplier, $lokasi, $deskripsi, $stok, $harga, $foto_baru, $doc_baru, $id, $uid);
         if (!$stmt->execute()) { echo json_encode(['status'=>'error','message'=>'Gagal mengupdate: '.$stmt->error]); exit; }
         echo json_encode(['status'=>'success','message'=>'Barang diperbarui']); exit;
     }
@@ -160,8 +163,9 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_id'])) {
     // Pastikan kolom soft-delete tersedia
     ensure_barang_columns($koneksi);
 
-    $stmt = $koneksi->prepare("UPDATE barang SET is_deleted = 1, deleted_at = NOW(), stok = 0 WHERE id = ?");
-    $stmt->bind_param("i", $id);
+    $uid = (int)($_SESSION['user_id'] ?? 0);
+    $stmt = $koneksi->prepare("UPDATE barang SET is_deleted = 1, deleted_at = NOW(), stok = 0 WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $id, $uid);
     if ($stmt->execute()) {
         echo json_encode(['status' => 'success', 'message' => 'Data dihapus (soft delete).']);
     } else {
